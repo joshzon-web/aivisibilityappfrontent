@@ -33,3 +33,4 @@ export const listScans = () => api.get('/scans');
 export const getScan = (id) => api.get(`/scans/${id}`);
 
 export const deleteScan = (id) => api.delete(`/scans/${id}`);
+// updated
