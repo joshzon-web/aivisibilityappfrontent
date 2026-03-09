@@ -1,0 +1,201 @@
+.layout { display: flex; min-height: 100vh; }
+
+.sidebar {
+  width: 240px;
+  min-height: 100vh;
+  background: #070c13;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 24px 16px;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+}
+
+.logo {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px 24px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+
+.logoMark { font-size: 1.2rem; color: var(--accent); }
+.logoText {
+  font-family: 'Syne', sans-serif; font-weight: 800;
+  font-size: 0.8rem; letter-spacing: 0.12em; color: var(--accent);
+}
+
+.nav { flex: 1; }
+
+.navItem {
+  width: 100%; text-align: left; background: none; border: none;
+  color: var(--muted); padding: 10px 12px; border-radius: 8px;
+  font-size: 0.82rem; letter-spacing: 0.04em; transition: all 0.15s; cursor: pointer;
+}
+.navItem:hover { background: rgba(56,189,248,0.06); color: var(--text); }
+
+.sidebarFooter { border-top: 1px solid var(--border); padding-top: 16px; }
+
+.userInfo {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 0.78rem; color: var(--muted);
+  padding: 8px 12px; margin-bottom: 8px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.userDot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent2); flex-shrink: 0; }
+
+.logoutBtn {
+  width: 100%; background: none; border: 1px solid var(--border);
+  color: var(--muted); border-radius: 8px; padding: 8px;
+  font-size: 0.78rem; transition: all 0.15s; cursor: pointer;
+}
+.logoutBtn:hover { border-color: var(--red); color: var(--red); }
+
+/* Main */
+.main { margin-left: 240px; flex: 1; padding: 40px 48px; }
+
+.header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 28px;
+}
+
+.businessName { font-size: 1.8rem; margin-bottom: 6px; }
+.searchTerm { color: var(--muted); font-size: 0.82rem; }
+
+.scoreBadge {
+  border: 2px solid;
+  border-radius: 14px;
+  padding: 14px 22px;
+  text-align: center;
+  min-width: 100px;
+}
+
+.scoreNum { display: block; font-family: 'Syne', sans-serif; font-size: 2.4rem; font-weight: 800; line-height: 1; }
+.scoreLabel { display: block; font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 4px; }
+
+/* Tabs */
+.tabs { display: flex; gap: 4px; margin-bottom: 28px; }
+
+.tab {
+  background: none; border: 1px solid transparent; border-radius: 8px;
+  color: var(--muted); padding: 8px 18px; font-size: 0.82rem;
+  font-family: 'DM Mono', monospace; cursor: pointer; transition: all 0.15s;
+}
+.tab:hover { color: var(--text); border-color: var(--border); }
+.tabActive { border-color: var(--accent); color: var(--accent); background: rgba(56,189,248,0.08); }
+
+.tabContent { animation: fadeUp 0.3s ease both; }
+
+/* KPIs */
+.kpiRow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+
+.kpi {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px;
+}
+
+.kpiValue { font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 800; margin-bottom: 4px; }
+.kpiLabel { font-size: 0.75rem; color: var(--muted); }
+
+/* Charts */
+.chartsRow { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+.chartCard {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 24px;
+}
+
+.chartTitle { font-size: 0.85rem; color: var(--muted); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* Prompts */
+.promptsGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+.promptCard {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 16px;
+}
+
+.promptHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.promptEngine { font-size: 0.75rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; }
+
+.promptBadge { font-size: 0.72rem; padding: 3px 10px; border-radius: 20px; }
+.mentioned { background: rgba(110,231,183,0.1); color: var(--accent2); border: 1px solid rgba(110,231,183,0.2); }
+.notMentioned { background: rgba(248,113,113,0.1); color: var(--red); border: 1px solid rgba(248,113,113,0.2); }
+
+.promptText { font-size: 0.8rem; color: var(--muted); line-height: 1.5; }
+
+/* Competitors */
+.competitorsList { display: flex; flex-direction: column; gap: 12px; }
+
+.competitorRow {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 16px 20px;
+  display: flex; align-items: center; gap: 16px;
+}
+
+.compRank { font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 700; color: var(--muted); min-width: 36px; }
+.compInfo { flex: 1; }
+.compName { font-size: 0.9rem; color: var(--text); margin-bottom: 3px; }
+.compAddress { font-size: 0.78rem; color: var(--muted); }
+
+.compStats { display: flex; gap: 24px; }
+.compStat { text-align: center; }
+.compStat span:first-child { display: block; font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; }
+.compStatLabel { font-size: 0.7rem; color: var(--muted); }
+
+/* Report */
+.reportCard {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 32px;
+}
+
+.reportText {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.82rem;
+  color: var(--text);
+  line-height: 1.8;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Loading */
+.loadingPage {
+  display: flex; align-items: center; justify-content: center;
+  gap: 14px; min-height: 100vh; color: var(--muted);
+}
+
+.spinner {
+  width: 20px; height: 20px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.statsRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.statCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+}
+
+.statLabel { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+.statValue { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 600; color: var(--text); }
+
+.promptCategory {
+  margin-top: 8px;
+  font-size: 0.7rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.empty { color: var(--muted); padding: 40px 0; font-size: 0.85rem; }
