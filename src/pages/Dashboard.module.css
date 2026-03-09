@@ -235,3 +235,20 @@
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
+
+.cardActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.scanBadge {
+  font-size: 0.72rem;
+  font-family: 'DM Mono', monospace;
+  letter-spacing: 0.05em;
+}
+
+.scanCount {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
