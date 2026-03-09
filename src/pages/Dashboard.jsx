@@ -1,28 +1,28 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { listScans, deleteScan } from '../api/client';
+import { listBusinesses, deleteBusiness } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import NewScan from '../components/NewScan';
 import styles from './Dashboard.module.css';
 
 export default function Dashboard() {
   const { user, logoutUser } = useAuth();
-  const [scans, setScans] = useState([]);
+  const [businesses, setBusinesses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showNewScan, setShowNewScan] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    listScans()
-      .then((res) => setScans(res.data.scans))
+    listBusinesses()
+      .then((res) => setBusinesses(res.data.businesses))
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
 
   const handleDelete = async (id, e) => {
     e.stopPropagation();
-    await deleteScan(id);
-    setScans(scans.filter((s) => s.id !== id));
+    await deleteBusiness(id);
+    setBusinesses(businesses.filter((b) => b.id !== id));
   };
 
   const handleScanComplete = (scanId) => {
@@ -30,9 +30,17 @@ export default function Dashboard() {
   };
 
   const scoreColour = (score) => {
+    if (!score && score !== 0) return 'var(--text-muted)';
     if (score >= 60) return 'var(--accent2)';
     if (score >= 35) return 'var(--orange)';
     return 'var(--red)';
+  };
+
+  const scoreLabel = (score) => {
+    if (!score && score !== 0) return '—';
+    if (score >= 60) return 'Good';
+    if (score >= 35) return 'Fair';
+    return 'Poor';
   };
 
   return (
@@ -72,75 +80,95 @@ export default function Dashboard() {
           <>
             <div className={styles.header + ' fade-up'}>
               <div>
-                <h1 className={styles.title}>Your scans</h1>
+                <h1 className={styles.title}>Tracked businesses</h1>
                 <p className={styles.sub}>
-                  {scans.length} scan{scans.length !== 1 ? 's' : ''} saved
+                  {businesses.length} business{businesses.length !== 1 ? 'es' : ''} tracked
                 </p>
               </div>
               <button
                 className={styles.newBtn}
                 onClick={() => setShowNewScan(true)}
               >
-                + New scan
+                + Track new business
               </button>
             </div>
 
             {loading ? (
               <div className={styles.loading}>
                 <div className={styles.spinner} />
-                <span>Loading scans...</span>
+                <span>Loading businesses...</span>
               </div>
-            ) : scans.length === 0 ? (
+            ) : businesses.length === 0 ? (
               <div className={styles.empty + ' fade-up-1'}>
                 <div className={styles.emptyIcon}>◈</div>
-                <h2>No scans yet</h2>
-                <p>Run your first AI visibility scan to get started</p>
+                <h2>No businesses tracked yet</h2>
+                <p>Add your first business to start tracking AI visibility</p>
                 <button
                   className={styles.newBtn}
                   onClick={() => setShowNewScan(true)}
                 >
-                  + Run first scan
+                  + Track first business
                 </button>
               </div>
             ) : (
               <div className={styles.grid}>
-                {scans.map((scan, i) => (
-                  <div
-                    key={scan.id}
-                    className={styles.card + ` fade-up-${Math.min(i + 1, 4)}`}
-                    onClick={() => navigate(`/scan/${scan.id}`)}
-                  >
-                    <div className={styles.cardTop}>
-                      <div
-                        className={styles.score}
-                        style={{ color: scoreColour(scan.ai_visibility_score) }}
-                      >
-                        {scan.ai_visibility_score}
-                        <span className={styles.scoreMax}>/100</span>
+                {businesses.map((biz, i) => {
+                  const latest = biz.latest_scan;
+                  const score = latest?.ai_visibility_score;
+                  return (
+                    <div
+                      key={biz.id}
+                      className={styles.card + ` fade-up-${Math.min(i + 1, 4)}`}
+                      onClick={() => latest ? navigate(`/scan/${latest.id}`) : setShowNewScan(true)}
+                    >
+                      <div className={styles.cardTop}>
+                        <div
+                          className={styles.score}
+                          style={{ color: scoreColour(score) }}
+                        >
+                          {score ?? '—'}
+                          {score != null && <span className={styles.scoreMax}>/100</span>}
+                        </div>
+                        <div className={styles.cardActions}>
+                          <span
+                            className={styles.scanBadge}
+                            style={{ color: scoreColour(score) }}
+                          >
+                            {scoreLabel(score)}
+                          </span>
+                          <button
+                            className={styles.deleteBtn}
+                            onClick={(e) => handleDelete(biz.id, e)}
+                            title="Remove"
+                          >
+                            ✕
+                          </button>
+                        </div>
                       </div>
-                      <button
-                        className={styles.deleteBtn}
-                        onClick={(e) => handleDelete(scan.id, e)}
-                        title="Delete"
-                      >
-                        ✕
-                      </button>
-                    </div>
 
-                    <div className={styles.businessName}>{scan.business_name}</div>
-                    <div className={styles.searchTerm}>{scan.search_term}</div>
-                    <div className={styles.location}>{scan.location}</div>
+                      <div className={styles.businessName}>{biz.name}</div>
+                      <div className={styles.searchTerm}>{biz.search_term}</div>
+                      {biz.address && (
+                        <div className={styles.location}>{biz.address}</div>
+                      )}
 
-                    <div className={styles.cardFooter}>
-                      <span className={styles.date}>
-                        {new Date(scan.created_at).toLocaleDateString('en-GB', {
-                          day: 'numeric', month: 'short', year: 'numeric'
-                        })}
-                      </span>
-                      <span className={styles.viewLink}>View report →</span>
+                      <div className={styles.cardFooter}>
+                        <span className={styles.scanCount}>
+                          {biz.scan_count} scan{biz.scan_count !== 1 ? 's' : ''}
+                        </span>
+                        {latest ? (
+                          <span className={styles.date}>
+                            Last scanned {new Date(latest.created_at).toLocaleDateString('en-GB', {
+                              day: 'numeric', month: 'short', year: 'numeric'
+                            })}
+                          </span>
+                        ) : (
+                          <span className={styles.viewLink}>Scan now →</span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </>
