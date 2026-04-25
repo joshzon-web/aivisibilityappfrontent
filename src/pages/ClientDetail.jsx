@@ -30,8 +30,9 @@ export default function ClientDetail() {
   const [autoSend, setAutoSend] = useState(false);
   const [togglingAutoSend, setTogglingAutoSend] = useState(false);
 
+  const userId = user?.id;
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
     setLoading(true);
     setLoadError(false);
     Promise.all([listBusinesses(), listClients()])
@@ -43,7 +44,7 @@ export default function ClientDetail() {
       })
       .catch(() => setLoadError(true))
       .finally(() => setLoading(false));
-  }, [clientId, user]);
+  }, [clientId, userId]);
 
   // Close ⋯ menu on outside click
   useEffect(() => {

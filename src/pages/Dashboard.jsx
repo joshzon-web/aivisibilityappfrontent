@@ -38,8 +38,9 @@ export default function Dashboard() {
   const [editForm, setEditForm] = useState(EMPTY_FORM);
   const menuRef = useRef(null);
 
+  const userId = user?.id;
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
     setLoading(true);
     setLoadError(false);
     Promise.all([listClients(), listBusinesses()])
@@ -49,7 +50,7 @@ export default function Dashboard() {
       })
       .catch(() => setLoadError(true))
       .finally(() => setLoading(false));
-  }, [user]);
+  }, [userId]);
 
   // Close card menu on outside click
   useEffect(() => {

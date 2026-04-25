@@ -24,8 +24,9 @@ export default function AllBusinesses() {
   const [openMenuId, setOpenMenuId] = useState(null);
   const menuRef = useRef(null);
 
+  const userId = user?.id;
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
     setLoading(true);
     setLoadError(false);
     Promise.all([listBusinesses(), listClients()])
@@ -35,7 +36,7 @@ export default function AllBusinesses() {
       })
       .catch(() => setLoadError(true))
       .finally(() => setLoading(false));
-  }, [user]);
+  }, [userId]);
 
   useEffect(() => {
     if (!openMenuId) return;
@@ -58,7 +59,6 @@ export default function AllBusinesses() {
   const handleAssignClient = async (bizId, clientId, e) => {
     e.stopPropagation();
     setOpenMenuId(null);
-    const prevClientId = businesses.find(b => b.id === bizId)?.client_id;
     try {
       const res = await assignBusinessToClient(bizId, clientId);
       setBusinesses(prev => prev.map(b => b.id === bizId ? { ...b, client_id: res.data.client_id } : b));

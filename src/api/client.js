@@ -13,13 +13,31 @@ api.interceptors.request.use((config) => {
 
 // On 401 clear the stale token so the user gets redirected to login
 // rather than seeing an empty dashboard forever.
+// Also retry transient failures (network errors / 5xx) on idempotent GETs once
+// — fixes intermittent "Couldn't load X" errors when the API has a brief blip
+// (cold start, dropped connection, transient 502 from the proxy, etc.).
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     if (error?.response?.status === 401) {
       localStorage.removeItem('token');
       window.location.href = '/auth';
+      return Promise.reject(error);
     }
+
+    const cfg = error?.config;
+    const status = error?.response?.status;
+    const isNetworkError = !error?.response; // no response = network/CORS/timeout
+    const isServerError = status >= 500 && status < 600;
+    const isGet = (cfg?.method || 'get').toLowerCase() === 'get';
+
+    // Only retry idempotent GETs, only once, only on transient failures.
+    if (cfg && isGet && !cfg._retried && (isNetworkError || isServerError)) {
+      cfg._retried = true;
+      await new Promise((r) => setTimeout(r, 500));
+      return api(cfg);
+    }
+
     return Promise.reject(error);
   }
 );

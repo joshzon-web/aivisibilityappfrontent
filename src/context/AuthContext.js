@@ -7,7 +7,7 @@ const AuthContext = createContext(null);
 // Default brand = RedRock Rep. Any field the user sets overrides this.
 const DEFAULT_BRAND = {
   brand_name:    'RedRock Rep',
-  logo_url:      null,           // null → use /redrock-logo.svg
+  logo_url:      null,
   primary_color: '#c8102e',
   support_email: null,
   cta_url:       null,
@@ -15,15 +15,32 @@ const DEFAULT_BRAND = {
   share_footer:  null,
 };
 
+function readStoredUser() {
+  try {
+    const raw = localStorage.getItem('user');
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 export function AuthProvider({ children }) {
-  const [user, setUser]     = useState(null);
-  const [brand, setBrand]   = useState(DEFAULT_BRAND);
-  const [loading, setLoading] = useState(true);
+  // Initialise synchronously from localStorage — pages render immediately
+  // on refresh instead of waiting for getMe() to round-trip.
+  const [user, setUser] = useState(readStoredUser);
+  const [brand, setBrand] = useState(DEFAULT_BRAND);
+
+  // Only block rendering if we have a token but no cached user object yet
+  // (i.e. the very first login ever on this device).
+  const [loading, setLoading] = useState(() => {
+    const hasToken = !!localStorage.getItem('token');
+    const hasUser  = !!localStorage.getItem('user');
+    return hasToken && !hasUser;
+  });
 
   const fetchBrand = useCallback(async () => {
     try {
       const res = await api.get('/me/brand');
-      // Merge user overrides on top of defaults so null fields fall back
       setBrand({ ...DEFAULT_BRAND, ...res.data });
     } catch {
       setBrand(DEFAULT_BRAND);
@@ -32,40 +49,48 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (token) {
-      getMe()
-        .then((res) => {
-          setUser(res.data);
-          return fetchBrand();
-        })
-        .catch((err) => {
-          // Only clear the token for auth errors (401/403).
-          // Network errors (server down, timeout) should NOT log the user out —
-          // their token is still valid and the server will come back.
-          const status = err?.response?.status;
-          if (status === 401 || status === 403) {
-            localStorage.removeItem('token');
-          }
-        })
-        .finally(() => setLoading(false));
-    } else {
+    if (!token) {
       setLoading(false);
+      return;
     }
+
+    // Silently validate the token in the background.
+    // If a cached user is already in state, loading is already false and
+    // pages are rendering — this just keeps the server-side truth in sync.
+    getMe()
+      .then((res) => {
+        setUser(res.data);
+        localStorage.setItem('user', JSON.stringify(res.data));
+        fetchBrand(); // non-blocking — don't delay page render
+      })
+      .catch((err) => {
+        const status = err?.response?.status;
+        if (status === 401 || status === 403) {
+          // Token is genuinely invalid — clear everything
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          setUser(null);
+        }
+        // Network errors (server down) leave the cached user in place
+        // so the UI doesn't log the user out on a bad connection.
+      })
+      .finally(() => setLoading(false));
   }, [fetchBrand]);
 
   const loginUser = (token, userData) => {
     localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
     fetchBrand();
   };
 
   const logoutUser = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setUser(null);
     setBrand(DEFAULT_BRAND);
   };
 
-  // Exposed so Settings page can trigger a refresh after saving changes.
   const refreshBrand = fetchBrand;
 
   return (
