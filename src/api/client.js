@@ -36,6 +36,8 @@ export const login = (email, password) =>
 export const getMe = () => api.get('/auth/me');
 export const verifyEmail = (token) => api.get('/auth/verify-email', { params: { token } });
 export const resendVerification = (email) => api.post('/auth/resend-verification', { email });
+export const forgotPassword = (email) => api.post('/auth/forgot-password', { email });
+export const resetPassword = (token, password) => api.post('/auth/reset-password', { token, password });
 
 // Business search (Google Places)
 export const searchBusinesses = (q) =>

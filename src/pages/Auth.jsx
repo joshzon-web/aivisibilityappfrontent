@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { login, signup, resendVerification } from '../api/client';
+import { login, signup, resendVerification, forgotPassword } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import styles from './Auth.module.css';
 
@@ -34,6 +34,12 @@ export default function Auth() {
   const [confirmPassword, setConfirm]     = useState('');
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [touched, setTouched]             = useState({});   // track blur for inline errors
+
+  // Forgot-password inline flow
+  const [forgotMode, setForgotMode]     = useState(false);
+  const [forgotEmail, setForgotEmail]   = useState('');
+  const [forgotSent, setForgotSent]     = useState(false);
+  const [forgotLoading, setForgotLoading] = useState(false);
 
   // Post-signup "check your email" screen
   const [verifyEmail, setVerifyEmail]   = useState('');
@@ -76,6 +82,22 @@ export default function Auth() {
     setFirstName('');
     setLastName('');
     setAgreedToTerms(false);
+    setForgotMode(false);
+    setForgotSent(false);
+    setForgotEmail('');
+  };
+
+  const handleForgotSubmit = async (e) => {
+    e.preventDefault();
+    setForgotLoading(true);
+    try {
+      await forgotPassword(forgotEmail);
+    } catch {
+      // Always show success — never reveal if email exists
+    } finally {
+      setForgotLoading(false);
+      setForgotSent(true);
+    }
   };
 
   // Inline validation helpers
@@ -160,6 +182,70 @@ export default function Auth() {
               Sign in
             </button>
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Forgot password screen ────────────────────────────────────────────────
+  if (forgotMode) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.grid} />
+        <div className={styles.card + ' fade-up'}>
+          <div className={styles.logo}>
+            <span className={styles.logoMark}>◈</span>
+            <span className={styles.logoText}>AI VISIBILITY</span>
+          </div>
+
+          {forgotSent ? (
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>✉️</div>
+              <h1 className={styles.title} style={{ fontSize: '1.4rem' }}>Check your email</h1>
+              <p className={styles.sub}>
+                If an account exists for <strong style={{ color: 'var(--text)' }}>{forgotEmail}</strong>,
+                a reset link is on its way. It expires in 1 hour.
+              </p>
+              <p className={styles.sub} style={{ fontSize: '0.8rem' }}>
+                Check your spam folder if you don't see it.
+              </p>
+              <button
+                className={styles.btn}
+                style={{ marginTop: '8px' }}
+                onClick={() => switchMode('login')}
+              >
+                Back to sign in
+              </button>
+            </div>
+          ) : (
+            <>
+              <h1 className={styles.title} style={{ fontSize: '1.5rem' }}>Forgot password?</h1>
+              <p className={styles.sub}>
+                Enter your email and we'll send you a reset link.
+              </p>
+              <form onSubmit={handleForgotSubmit} className={styles.form}>
+                <div className={styles.field}>
+                  <label>Email</label>
+                  <input
+                    type="email"
+                    value={forgotEmail}
+                    onChange={e => setForgotEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    autoFocus
+                    required
+                  />
+                </div>
+                <button type="submit" className={styles.btn} disabled={forgotLoading}>
+                  {forgotLoading ? 'Sending…' : 'Send reset link'}
+                </button>
+              </form>
+              <p className={styles.toggle}>
+                <button className={styles.toggleBtn} onClick={() => switchMode('login')}>
+                  ← Back to sign in
+                </button>
+              </p>
+            </>
+          )}
         </div>
       </div>
     );
@@ -257,6 +343,19 @@ export default function Auth() {
               </div>
             )}
           </div>
+
+          {/* Forgot password link — login only */}
+          {mode === 'login' && (
+            <div style={{ textAlign: 'right', marginTop: '-10px' }}>
+              <button
+                type="button"
+                className={styles.toggleBtn}
+                onClick={() => { setForgotMode(true); setForgotEmail(email); setError(''); }}
+              >
+                Forgot password?
+              </button>
+            </div>
+          )}
 
           {/* Confirm password — signup only */}
           {mode === 'signup' && (

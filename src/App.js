@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './components/Toast';
 import Auth from './pages/Auth';
 import VerifyEmail from './pages/VerifyEmail';
+import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import ClientDetail from './pages/ClientDetail';
 import AllBusinesses from './pages/AllBusinesses';
@@ -32,6 +33,8 @@ export default function App() {
             <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
             {/* Public — no auth required; handles email verification link from inbox */}
             <Route path="/auth/verify" element={<VerifyEmail />} />
+            {/* Public — password reset link from inbox */}
+            <Route path="/auth/reset-password" element={<ResetPassword />} />
             <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
             <Route path="/clients/:id" element={<PrivateRoute><ClientDetail /></PrivateRoute>} />
             <Route path="/all-businesses" element={<PrivateRoute><AllBusinesses /></PrivateRoute>} />
