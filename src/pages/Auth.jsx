@@ -1,27 +1,111 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { login, signup } from '../api/client';
+import { login, signup, resendVerification } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import styles from './Auth.module.css';
 
+// Password strength: returns 0–4
+function getStrength(pw) {
+  if (!pw) return 0;
+  let score = 0;
+  if (pw.length >= 8)  score++;
+  if (pw.length >= 12) score++;
+  if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  return Math.min(score, 4);
+}
+
+const STRENGTH_LABEL = ['', 'Weak', 'Fair', 'Good', 'Strong'];
+const STRENGTH_COLOR = ['', 'var(--red)', 'var(--orange)', '#f59e0b', 'var(--accent2)'];
+
 export default function Auth() {
   const [mode, setMode] = useState('login'); // 'login' | 'signup'
-  const [email, setEmail] = useState('');
+
+  // Shared fields
+  const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [error, setError]       = useState('');
+  const [loading, setLoading]   = useState(false);
+
+  // Signup-only fields
+  const [firstName, setFirstName]         = useState('');
+  const [lastName, setLastName]           = useState('');
+  const [confirmPassword, setConfirm]     = useState('');
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [touched, setTouched]             = useState({});   // track blur for inline errors
+
+  // Post-signup "check your email" screen
+  const [verifyEmail, setVerifyEmail]   = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendStatus, setResendStatus] = useState('');
+  const cooldownRef = useRef(null);
+
   const { loginUser } = useAuth();
-  const navigate = useNavigate();
+  const navigate      = useNavigate();
+
+  // Countdown for resend button
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    cooldownRef.current = setInterval(() => {
+      setResendCooldown(prev => {
+        if (prev <= 1) { clearInterval(cooldownRef.current); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(cooldownRef.current);
+  }, [resendCooldown]);
+
+  const handleResend = async () => {
+    if (resendCooldown > 0) return;
+    setResendStatus('');
+    try {
+      await resendVerification(verifyEmail);
+      setResendStatus('sent');
+      setResendCooldown(30);
+    } catch {
+      setResendStatus('error');
+    }
+  };
+
+  const switchMode = (next) => {
+    setMode(next);
+    setError('');
+    setTouched({});
+    setConfirm('');
+    setFirstName('');
+    setLastName('');
+    setAgreedToTerms(false);
+  };
+
+  // Inline validation helpers
+  const passwordStrength = getStrength(password);
+  const passwordsMatch   = password === confirmPassword;
+  const confirmError     = touched.confirm && confirmPassword && !passwordsMatch
+    ? "Passwords don't match" : '';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (mode === 'signup') {
+      if (!firstName.trim()) return setError('Please enter your first name.');
+      if (!lastName.trim())  return setError('Please enter your last name.');
+      if (password.length < 8) return setError('Password must be at least 8 characters.');
+      if (!passwordsMatch)   return setError("Passwords don't match.");
+      if (!agreedToTerms)    return setError('Please agree to the Terms of Service to continue.');
+    }
+
     setLoading(true);
     try {
-      const fn = mode === 'login' ? login : signup;
-      const res = await fn(email, password);
-      loginUser(res.data.token, { email: res.data.email, id: res.data.id });
-      navigate('/dashboard');
+      if (mode === 'login') {
+        const res = await login(email, password);
+        loginUser(res.data.token, { email: res.data.email, id: res.data.id });
+        navigate('/dashboard');
+      } else {
+        await signup(email, password, firstName.trim(), lastName.trim());
+        setVerifyEmail(email);
+      }
     } catch (err) {
       setError(err.response?.data?.detail || 'Something went wrong.');
     } finally {
@@ -29,6 +113,59 @@ export default function Auth() {
     }
   };
 
+  // ── "Check your email" screen ─────────────────────────────────────────────
+  if (verifyEmail) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.grid} />
+        <div className={styles.card + ' fade-up'} style={{ textAlign: 'center' }}>
+          <div className={styles.logo}>
+            <span className={styles.logoMark}>◈</span>
+            <span className={styles.logoText}>AI VISIBILITY</span>
+          </div>
+          <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>✉️</div>
+          <h1 className={styles.title} style={{ fontSize: '1.4rem' }}>Check your email</h1>
+          <p className={styles.sub} style={{ marginBottom: '4px' }}>We sent a verification link to</p>
+          <p style={{ fontWeight: 600, marginBottom: '16px', color: 'var(--text)' }}>{verifyEmail}</p>
+          <p className={styles.sub} style={{ fontSize: '0.82rem', lineHeight: 1.6, marginBottom: 0 }}>
+            Click the link to activate your account. It expires in 24 hours.<br />
+            Check your spam folder if you don't see it.
+          </p>
+
+          <button
+            className={styles.btn}
+            onClick={handleResend}
+            disabled={resendCooldown > 0}
+            style={{ marginTop: '20px', opacity: resendCooldown > 0 ? 0.5 : 1 }}
+          >
+            {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend verification email'}
+          </button>
+          {resendStatus === 'sent' && (
+            <p style={{ color: 'var(--accent2)', fontSize: '0.8rem', marginTop: '8px' }}>
+              ✓ New link sent — check your inbox
+            </p>
+          )}
+          {resendStatus === 'error' && (
+            <p style={{ color: 'var(--red)', fontSize: '0.8rem', marginTop: '8px' }}>
+              Couldn't send — try again in a moment
+            </p>
+          )}
+
+          <p className={styles.toggle} style={{ marginTop: '20px' }}>
+            Already verified?{' '}
+            <button
+              className={styles.toggleBtn}
+              onClick={() => { setVerifyEmail(''); switchMode('login'); }}
+            >
+              Sign in
+            </button>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Login / signup form ───────────────────────────────────────────────────
   return (
     <div className={styles.page}>
       <div className={styles.grid} />
@@ -49,32 +186,125 @@ export default function Auth() {
         </p>
 
         <form onSubmit={handleSubmit} className={styles.form}>
+
+          {/* Name row — signup only */}
+          {mode === 'signup' && (
+            <div className={styles.nameRow}>
+              <div className={styles.field}>
+                <label>First name</label>
+                <input
+                  type="text"
+                  value={firstName}
+                  onChange={e => setFirstName(e.target.value)}
+                  placeholder="Jane"
+                  autoComplete="given-name"
+                  required
+                />
+              </div>
+              <div className={styles.field}>
+                <label>Last name</label>
+                <input
+                  type="text"
+                  value={lastName}
+                  onChange={e => setLastName(e.target.value)}
+                  placeholder="Smith"
+                  autoComplete="family-name"
+                  required
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Email */}
           <div className={styles.field}>
             <label>Email</label>
             <input
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={e => setEmail(e.target.value)}
               placeholder="you@example.com"
+              autoComplete="email"
               required
             />
           </div>
 
+          {/* Password */}
           <div className={styles.field}>
             <label>Password</label>
             <input
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={e => setPassword(e.target.value)}
               placeholder="••••••••"
+              autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
               required
             />
+            {/* Strength bar — signup only */}
+            {mode === 'signup' && password && (
+              <div className={styles.strengthWrap}>
+                <div className={styles.strengthBar}>
+                  {[1, 2, 3, 4].map(n => (
+                    <div
+                      key={n}
+                      className={styles.strengthSegment}
+                      style={{ background: n <= passwordStrength ? STRENGTH_COLOR[passwordStrength] : 'var(--border)' }}
+                    />
+                  ))}
+                </div>
+                <span style={{ fontSize: '0.72rem', color: STRENGTH_COLOR[passwordStrength] }}>
+                  {STRENGTH_LABEL[passwordStrength]}
+                </span>
+              </div>
+            )}
           </div>
+
+          {/* Confirm password — signup only */}
+          {mode === 'signup' && (
+            <div className={styles.field}>
+              <label>Confirm password</label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={e => setConfirm(e.target.value)}
+                onBlur={() => setTouched(t => ({ ...t, confirm: true }))}
+                placeholder="••••••••"
+                autoComplete="new-password"
+                required
+                style={confirmError ? { borderColor: 'var(--red)' } : {}}
+              />
+              {confirmError && (
+                <span style={{ fontSize: '0.75rem', color: 'var(--red)' }}>{confirmError}</span>
+              )}
+            </div>
+          )}
+
+          {/* Terms — signup only */}
+          {mode === 'signup' && (
+            <label className={styles.termsRow}>
+              <input
+                type="checkbox"
+                checked={agreedToTerms}
+                onChange={e => setAgreedToTerms(e.target.checked)}
+              />
+              <span>
+                I agree to the{' '}
+                <a href="/terms" target="_blank" rel="noopener noreferrer" className={styles.termsLink}>
+                  Terms of Service
+                </a>
+                {' '}and{' '}
+                <a href="/privacy" target="_blank" rel="noopener noreferrer" className={styles.termsLink}>
+                  Privacy Policy
+                </a>
+              </span>
+            </label>
+          )}
 
           {error && <div className={styles.error}>{error}</div>}
 
           <button type="submit" className={styles.btn} disabled={loading}>
-            {loading ? 'Please wait...' : mode === 'login' ? 'Sign in' : 'Create account'}
+            {loading
+              ? 'Please wait…'
+              : mode === 'login' ? 'Sign in' : 'Create account'}
           </button>
         </form>
 
@@ -82,7 +312,7 @@ export default function Auth() {
           {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
           <button
             className={styles.toggleBtn}
-            onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError(''); }}
+            onClick={() => switchMode(mode === 'login' ? 'signup' : 'login')}
           >
             {mode === 'login' ? 'Sign up' : 'Sign in'}
           </button>

@@ -23,7 +23,7 @@
   border-radius: 20px;
   padding: 48px;
   width: 100%;
-  max-width: 440px;
+  max-width: 500px;
   position: relative;
   box-shadow: 0 0 80px rgba(56,189,248,0.06);
 }
@@ -137,3 +137,57 @@
   text-decoration: underline;
   cursor: pointer;
 }
+
+/* Side-by-side first / last name inputs */
+.nameRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* Password strength bar */
+.strengthWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.strengthBar {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+
+.strengthSegment {
+  height: 3px;
+  flex: 1;
+  border-radius: 99px;
+  transition: background 0.25s;
+}
+
+/* Terms of service checkbox row */
+.termsRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  cursor: pointer;
+  line-height: 1.5;
+}
+
+.termsRow input[type="checkbox"] {
+  margin-top: 2px;
+  flex-shrink: 0;
+  accent-color: var(--accent);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+.termsLink {
+  color: var(--accent);
+  text-decoration: underline;
+}
+

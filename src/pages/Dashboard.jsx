@@ -22,6 +22,7 @@ export default function Dashboard() {
   const [clients, setClients] = useState([]);
   const [businesses, setBusinesses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   // Create form
   const [showNew, setShowNew] = useState(false);
@@ -38,14 +39,17 @@ export default function Dashboard() {
   const menuRef = useRef(null);
 
   useEffect(() => {
+    if (!user) return;
+    setLoading(true);
+    setLoadError(false);
     Promise.all([listClients(), listBusinesses()])
       .then(([cRes, bRes]) => {
         setClients(cRes.data.clients);
         setBusinesses(bRes.data.businesses);
       })
-      .catch(console.error)
+      .catch(() => setLoadError(true))
       .finally(() => setLoading(false));
-  }, []);
+  }, [user]);
 
   // Close card menu on outside click
   useEffect(() => {
@@ -234,6 +238,10 @@ export default function Dashboard() {
 
         {loading ? (
           <div className={styles.loading}><div className={styles.spinner} /><span>Loading clients...</span></div>
+        ) : loadError ? (
+          <EmptyState icon="⚠" title="Couldn't load clients"
+            subtitle="Check your connection and try again."
+            action={{ label: 'Try again', onClick: () => { setLoadError(false); setLoading(true); Promise.all([listClients(), listBusinesses()]).then(([cRes, bRes]) => { setClients(cRes.data.clients); setBusinesses(bRes.data.businesses); }).catch(() => setLoadError(true)).finally(() => setLoading(false)); } }} />
         ) : clients.length === 0 && !showNew ? (
           <EmptyState
             icon="📁"

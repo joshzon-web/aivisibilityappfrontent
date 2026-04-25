@@ -11,16 +11,31 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// On 401 clear the stale token so the user gets redirected to login
+// rather than seeing an empty dashboard forever.
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 401) {
+      localStorage.removeItem('token');
+      window.location.href = '/auth';
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;
 
 // Auth
-export const signup = (email, password) =>
-  api.post('/auth/signup', { email, password });
+export const signup = (email, password, first_name, last_name) =>
+  api.post('/auth/signup', { email, password, first_name, last_name });
 
 export const login = (email, password) =>
   api.post('/auth/login', { email, password });
 
 export const getMe = () => api.get('/auth/me');
+export const verifyEmail = (token) => api.get('/auth/verify-email', { params: { token } });
+export const resendVerification = (email) => api.post('/auth/resend-verification', { email });
 
 // Business search (Google Places)
 export const searchBusinesses = (q) =>

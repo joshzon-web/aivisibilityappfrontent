@@ -16,6 +16,7 @@ export default function AllBusinesses() {
   const [businesses, setBusinesses] = useState([]);
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [showNewScan, setShowNewScan] = useState(false);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
@@ -24,14 +25,17 @@ export default function AllBusinesses() {
   const menuRef = useRef(null);
 
   useEffect(() => {
+    if (!user) return;
+    setLoading(true);
+    setLoadError(false);
     Promise.all([listBusinesses(), listClients()])
       .then(([bizRes, clientRes]) => {
         setBusinesses(bizRes.data.businesses);
         setClients(clientRes.data.clients);
       })
-      .catch(console.error)
+      .catch(() => setLoadError(true))
       .finally(() => setLoading(false));
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     if (!openMenuId) return;
@@ -165,6 +169,10 @@ export default function AllBusinesses() {
 
             {loading ? (
               <div className={styles.loading}><div className={styles.spinner} /><span>Loading...</span></div>
+            ) : loadError ? (
+              <EmptyState icon="⚠" title="Couldn't load businesses"
+                subtitle="Check your connection and try again."
+                action={{ label: 'Try again', onClick: () => { setLoadError(false); setLoading(true); Promise.all([listBusinesses(), listClients()]).then(([bizRes, clientRes]) => { setBusinesses(bizRes.data.businesses); setClients(clientRes.data.clients); }).catch(() => setLoadError(true)).finally(() => setLoading(false)); } }} />
             ) : businesses.length === 0 ? (
               <EmptyState icon="◈" title="No businesses tracked yet"
                 subtitle="Go to a client and track their first business."

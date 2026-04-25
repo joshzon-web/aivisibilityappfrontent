@@ -20,6 +20,7 @@ export default function ClientDetail() {
   const [businesses, setBusinesses] = useState([]);
   const [client, setClient] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [showNewScan, setShowNewScan] = useState(false);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
@@ -30,6 +31,9 @@ export default function ClientDetail() {
   const [togglingAutoSend, setTogglingAutoSend] = useState(false);
 
   useEffect(() => {
+    if (!user) return;
+    setLoading(true);
+    setLoadError(false);
     Promise.all([listBusinesses(), listClients()])
       .then(([bizRes, clientRes]) => {
         setBusinesses(bizRes.data.businesses);
@@ -37,9 +41,9 @@ export default function ClientDetail() {
         setClient(found || null);
         setAutoSend(found?.auto_send_reports ?? false);
       })
-      .catch(console.error)
+      .catch(() => setLoadError(true))
       .finally(() => setLoading(false));
-  }, [clientId]);
+  }, [clientId, user]);
 
   // Close ⋯ menu on outside click
   useEffect(() => {
@@ -244,6 +248,10 @@ export default function ClientDetail() {
 
             {loading ? (
               <div className={styles.loading}><div className={styles.spinner} /><span>Loading...</span></div>
+            ) : loadError ? (
+              <EmptyState icon="⚠" title="Couldn't load data"
+                subtitle="Check your connection and try again."
+                action={{ label: 'Try again', onClick: () => { setLoadError(false); setLoading(true); Promise.all([listBusinesses(), listClients()]).then(([bizRes, clientRes]) => { setBusinesses(bizRes.data.businesses); const found = (clientRes.data.clients || []).find(c => c.id === clientId); setClient(found || null); }).catch(() => setLoadError(true)).finally(() => setLoading(false)); } }} />
             ) : clientBizCount === 0 ? (
               <EmptyState
                 icon="◈"
