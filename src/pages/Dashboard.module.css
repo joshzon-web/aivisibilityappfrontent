@@ -252,3 +252,185 @@
   font-size: 0.75rem;
   color: var(--muted);
 }
+
+/* ── Toolbar (search + filter + sort) ───────────────────── */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.searchWrap {
+  position: relative;
+  flex: 1;
+  min-width: 180px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  font-size: 1rem;
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 32px 8px 32px;
+  color: var(--text);
+  font-size: 0.82rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+.searchInput:focus { border-color: var(--accent); }
+.searchInput::placeholder { color: var(--muted); }
+
+.searchClear {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.72rem;
+  padding: 2px 4px;
+}
+
+.filterPills {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.filterPill {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 0.75rem;
+  font-family: 'DM Mono', monospace;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.filterPill:hover { border-color: var(--text); color: var(--text); }
+.filterPillActive { border-color: var(--accent); color: var(--accent); background: rgba(56,189,248,0.08); }
+
+.sortSelect {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: var(--text);
+  font-size: 0.78rem;
+  font-family: 'DM Mono', monospace;
+  cursor: pointer;
+  outline: none;
+  flex-shrink: 0;
+}
+
+/* ── Engine pills on card ────────────────────────────────── */
+.enginePills {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.enginePill {
+  font-size: 0.72rem;
+  font-family: 'DM Mono', monospace;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+/* ── Onboarding empty state ──────────────────────────────── */
+.onboarding {
+  display: flex;
+  justify-content: center;
+  padding: 60px 0;
+}
+
+.onboardingInner {
+  max-width: 480px;
+  text-align: center;
+}
+
+.onboardingIcon {
+  font-size: 2.5rem;
+  color: var(--accent);
+  opacity: 0.4;
+  margin-bottom: 20px;
+}
+
+.onboardingTitle {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.5rem;
+  color: var(--text);
+  margin-bottom: 12px;
+}
+
+.onboardingSub {
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+
+.onboardingSteps {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 36px;
+  text-align: left;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+}
+
+.onboardingStep {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.onboardingNum {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-size: 0.78rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.onboardingStepTitle {
+  font-size: 0.9rem;
+  color: var(--text);
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.onboardingStepSub {
+  font-size: 0.78rem;
+  color: var(--muted);
+}

@@ -199,3 +199,28 @@
 }
 
 .empty { color: var(--muted); padding: 40px 0; font-size: 0.85rem; }
+
+.promptsFilter {
+  margin-bottom: 16px;
+}
+
+.promptsCount {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.promptExpanded {
+  border-color: rgba(56,189,248,0.3);
+}
+
+.promptRaw {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 0.78rem;
+  color: var(--muted);
+  white-space: pre-wrap;
+  line-height: 1.6;
+  max-height: 300px;
+  overflow-y: auto;
+}

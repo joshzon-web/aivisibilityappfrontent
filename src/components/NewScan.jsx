@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { searchBusinesses, runScan } from '../api/client';
+import { searchBusinesses, runScan, probeBusinessLabel } from '../api/client';
 import styles from './NewScan.module.css';
 
 const STEPS = ['Search', 'Select', 'Scan'];
 
-export default function NewScan({ onComplete, onCancel }) {
+export default function NewScan({ onComplete, onCancel, clientId = null }) {
   const [step, setStep] = useState(0);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
@@ -14,6 +14,14 @@ export default function NewScan({ onComplete, onCancel }) {
   const [scanning, setScanning] = useState(false);
   const [scanStatus, setScanStatus] = useState('');
   const [error, setError] = useState('');
+
+  // Pre-scan area probe: we ask the backend for the smart label it would use
+  // so the user can confirm / override BEFORE spending ~24 LLM calls scanning
+  // the wrong neighbourhood. probe is the raw response; areaLabel is the
+  // editable text the user actually confirms.
+  const [probe, setProbe]             = useState(null);
+  const [probing, setProbing]         = useState(false);
+  const [areaLabel, setAreaLabel]     = useState('');
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -30,9 +38,23 @@ export default function NewScan({ onComplete, onCancel }) {
     }
   };
 
-  const handleSelect = (biz) => {
+  const handleSelect = async (biz) => {
     setSelected(biz);
     setStep(2);
+    // Fire the label probe in the background. Non-blocking: even if it fails
+    // the scan still works (backend will re-resolve from place_id anyway).
+    setProbe(null);
+    setAreaLabel('');
+    setProbing(true);
+    try {
+      const res = await probeBusinessLabel(biz.place_id);
+      setProbe(res.data);
+      setAreaLabel(res.data?.search_label || '');
+    } catch {
+      // Silent failure: leave areaLabel empty → backend picks automatically.
+    } finally {
+      setProbing(false);
+    }
   };
 
   const handleScan = async (e) => {
@@ -57,9 +79,16 @@ export default function NewScan({ onComplete, onCancel }) {
     }, 8000);
 
     try {
-      const res = await runScan(selected.place_id, searchTerm);
+      // Only send an override when the user actually changed it from the
+      // auto-picked label — otherwise let the backend resolve afresh.
+      const trimmed = (areaLabel || '').trim();
+      const autoPick = (probe?.search_label || '').trim();
+      const override = trimmed && trimmed !== autoPick ? trimmed : undefined;
+      const res = await runScan(selected.place_id, searchTerm, {
+        search_label_override: override,
+      });
       clearInterval(interval);
-      onComplete(res.data.scan_id);
+      onComplete(res.data.scan_id, res.data.business_id);
     } catch (err) {
       clearInterval(interval);
       setError(err.response?.data?.detail || 'Scan failed. Please try again.');
@@ -160,6 +189,62 @@ export default function NewScan({ onComplete, onCancel }) {
                     required
                   />
                   <span className={styles.hint}>What would a customer type to find this business?</span>
+                </div>
+
+                {/* Area the scan will search in — default comes from Google,
+                    user can edit if our auto-pick is too broad ("London")
+                    or wrong ("Tower Hamlets" instead of "Canary Wharf"). */}
+                <div className={styles.field}>
+                  <label>Area to search in</label>
+                  {probing ? (
+                    <input
+                      className={styles.input}
+                      value="Resolving area…"
+                      disabled
+                    />
+                  ) : (
+                    <>
+                      <input
+                        className={styles.input}
+                        value={areaLabel}
+                        onChange={(e) => setAreaLabel(e.target.value)}
+                        placeholder={probe?.search_label || 'e.g. Streatham'}
+                        list="area-candidates"
+                      />
+                      {probe?.candidates?.length > 0 && (
+                        <datalist id="area-candidates">
+                          {probe.candidates.map((c) => (
+                            <option key={c} value={c} />
+                          ))}
+                        </datalist>
+                      )}
+                      <span className={styles.hint}>
+                        {probe?.search_label
+                          ? `We'll use "${areaLabel || probe.search_label}" in prompts. `
+                          : 'Optional — leave blank and we\'ll pick one. '}
+                        {probe?.candidates?.length > 1 && 'Suggestions: '}
+                        {probe?.candidates?.slice(0, 4).map((c, i, arr) => (
+                          <button
+                            key={c}
+                            type="button"
+                            onClick={() => setAreaLabel(c)}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              padding: 0,
+                              color: 'var(--accent)',
+                              cursor: 'pointer',
+                              textDecoration: 'underline',
+                              marginRight: 6,
+                              fontSize: 'inherit',
+                            }}
+                          >
+                            {c}{i < arr.length - 1 ? ',' : ''}
+                          </button>
+                        ))}
+                      </span>
+                    </>
+                  )}
                 </div>
                 {error && <div className={styles.error}>{error}</div>}
                 <div className={styles.btnRow}>
