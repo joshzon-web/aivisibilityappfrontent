@@ -526,3 +526,12 @@
   0%, 100% { opacity: 1; }
   50% { opacity: 0.45; }
 }
+@media (max-width: 768px) {
+  .main {
+    margin-left: 0;
+    max-width: 100vw;
+  }
+  .mainPad {
+    padding: 24px 20px;
+  }
+}

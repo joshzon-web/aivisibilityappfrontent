@@ -114,3 +114,9 @@
   border-color: var(--red);
   color: var(--red);
 }
+
+@media (max-width: 768px) {
+  .sidebar {
+    display: none;
+  }
+}

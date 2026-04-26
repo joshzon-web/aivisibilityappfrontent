@@ -3,7 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import BrandLogo from '../components/BrandLogo';
 import Sidebar from '../components/Sidebar';
-import api, { getBillingStatus, createCheckout, createPortalSession } from '../api/client';
+import api, { createCheckout, createPortalSession } from '../api/client';
+import { useBillingStatus } from '../components/TrialBanner';
 
 // ── Plan definitions (mirrors core/billing.py) ────────────────────────────────
 const PLANS = {
@@ -135,8 +136,8 @@ function PlanCard({ planKey, currentPlan, hasSubscription, onUpgrade, onPortal, 
 }
 
 function BillingTab() {
-  const [status, setStatus] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // Use the shared hook so the sidebar quota widget stays in sync
+  const { status, loading, refresh } = useBillingStatus();
   const [activating, setActivating] = useState(false); // polling after checkout
   const [upgrading, setUpgrading] = useState(null);
   const [portalLoading, setPortalLoading] = useState(false);
@@ -144,46 +145,32 @@ function BillingTab() {
   const [searchParams, setSearchParams] = useSearchParams();
   const checkoutSuccess = searchParams.get('checkout') === 'success';
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const r = await getBillingStatus();
-        setStatus(r.data);
+  // Always refresh when billing tab mounts so both the tab and sidebar show live data
+  useEffect(() => { refresh(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-        // If we're on the success return URL but the plan hasn't flipped yet,
-        // the webhook is still in flight — poll until it lands (max 30s).
-        // Plan is set exclusively by the verified Stripe webhook; we never
-        // write it directly from the frontend.
-        if (checkoutSuccess && (r.data?.plan === 'trial')) {
-          setActivating(true);
-          let attempts = 0;
-          const poll = setInterval(async () => {
-            attempts++;
-            try {
-              const pr = await getBillingStatus();
-              if (pr.data?.plan !== 'trial') {
-                setStatus(pr.data);
-                setActivating(false);
-                clearInterval(poll);
-                // Clean up URL
-                setSearchParams({ tab: 'billing', checkout: 'success' }, { replace: true });
-              }
-            } catch { /* silent — keep polling */ }
-            if (attempts >= 15) { // 15 × 2s = 30s
-              setActivating(false);
-              clearInterval(poll);
-            }
-          }, 2000);
-          return () => clearInterval(poll);
-        }
-      } catch {
-        setError('Could not load billing status.');
-      } finally {
-        setLoading(false);
+  // Poll after Stripe checkout redirect until webhook lands and plan flips
+  useEffect(() => {
+    if (!checkoutSuccess || !status || status.plan !== 'trial') return;
+    setActivating(true);
+    let attempts = 0;
+    const poll = setInterval(() => {
+      attempts++;
+      refresh();
+      if (attempts >= 15) { // 15 × 2s = 30s
+        setActivating(false);
+        clearInterval(poll);
       }
-    };
-    load();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    }, 2000);
+    return () => clearInterval(poll);
+  }, [checkoutSuccess]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Stop the activating spinner once plan flips
+  useEffect(() => {
+    if (activating && status?.plan !== 'trial') {
+      setActivating(false);
+      setSearchParams({ tab: 'billing', checkout: 'success' }, { replace: true });
+    }
+  }, [status?.plan, activating, setSearchParams]);
 
   const handleUpgrade = async (plan) => {
     setUpgrading(plan);
@@ -330,7 +317,7 @@ function BillingTab() {
       {upgradablePlans.length > 0 && (
         <section style={{ marginBottom: 36 }}>
           <h2 style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--muted)', letterSpacing: '0.06em',
-            textTransform: 'uppercase', marginBottom: 16 }}>Upgrade</h2>
+            textTransform: 'uppercase', marginBottom: 16 }}>{plan === 'trial' ? 'Plans' : 'Upgrade'}</h2>
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'stretch' }}>
             {upgradablePlans.map(p => (
               <PlanCard key={p} planKey={p} currentPlan={plan}
@@ -349,23 +336,6 @@ function BillingTab() {
         </section>
       )}
 
-      {/* All-plans overview (for trial users) */}
-      {plan === 'trial' && (
-        <section>
-          <h2 style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--muted)', letterSpacing: '0.06em',
-            textTransform: 'uppercase', marginBottom: 16 }}>All plans</h2>
-          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'stretch' }}>
-            {['solo', 'agency', 'pro'].map(p => (
-              <PlanCard key={p} planKey={p} currentPlan={plan}
-                hasSubscription={false}
-                onUpgrade={handleUpgrade}
-                onPortal={handleManage}
-                upgrading={upgrading}
-                portalLoading={portalLoading} />
-            ))}
-          </div>
-        </section>
-      )}
     </div>
   );
 }
@@ -392,6 +362,8 @@ export default function Settings() {
     cta_url:       brand.cta_url       || '',
     cta_text:      brand.cta_text      || '',
     share_footer:  brand.share_footer  || '',
+    sales_bullets: brand.sales_bullets || '',
+    cta_headline:  brand.cta_headline  || '',
   });
   const [saving, setSaving]       = useState(false);
   const [saved, setSaved]         = useState(false);
@@ -503,7 +475,7 @@ export default function Settings() {
       <Sidebar active={activeTab === 'billing' ? 'billing' : 'whitelabel'} />
 
       {/* Main content */}
-      <main style={{ flex: 1, padding: '48px 48px 80px', maxWidth: 820, marginLeft: 240 }}>
+      <main style={{ flex: 1, padding: 'clamp(24px, 4vw, 48px) clamp(20px, 4vw, 48px) 80px', maxWidth: 820, marginLeft: 'var(--sidebar-offset, 240px)' }}>
 
         {/* ── Billing tab ── */}
         {activeTab === 'billing' && <BillingTab />}
@@ -664,6 +636,67 @@ export default function Settings() {
                       : <>Powered by <strong>{form.brand_name.trim() || 'Your Agency'}</strong></>
                     }
                   </div>
+                </div>
+              </section>
+
+              {/* ── Sales report settings ── */}
+              <section style={{ marginBottom: 40 }}>
+                <h2 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: 4, color: 'var(--text)' }}>
+                  Sales report
+                </h2>
+                <p style={{ fontSize: '0.8rem', color: 'var(--muted)', marginBottom: 20, lineHeight: 1.6 }}>
+                  Customise the one-page sales PDF sent to prospects. The cold email handles the pitch —
+                  keep the PDF as clean data unless you want to add a services box.
+                </p>
+
+                <div style={fieldStyle}>
+                  <label style={labelStyle}>Services / how you help</label>
+                  <textarea
+                    value={form.sales_bullets}
+                    onChange={set('sales_bullets')}
+                    rows={5}
+                    placeholder={'e.g.\nWe manage your Google Business Profile.\nWe help you get more 5-star reviews.\nWe protect against fake or unfair reviews.'}
+                    style={{
+                      ...inputStyle,
+                      resize: 'vertical',
+                      fontFamily: 'inherit',
+                      lineHeight: 1.6,
+                      minHeight: 100,
+                    }}
+                  />
+                  <p style={hintStyle}>
+                    Each line becomes a bullet point in the "How we can help" box on the sales PDF.
+                    Leave blank to hide the section entirely — recommended if your services differ by client.
+                  </p>
+                </div>
+
+                <div style={fieldStyle}>
+                  <label style={labelStyle}>CTA headline</label>
+                  <input
+                    style={inputStyle}
+                    value={form.cta_headline}
+                    onChange={set('cta_headline')}
+                    placeholder="Ready to improve your AI visibility?"
+                    maxLength={120}
+                  />
+                  <p style={hintStyle}>
+                    The headline in the coloured footer band of the sales PDF. Leave blank to use the default.
+                  </p>
+                </div>
+
+                <div style={fieldStyle}>
+                  <label style={labelStyle}>Footer tagline</label>
+                  <input
+                    style={inputStyle}
+                    value={form.cta_text}
+                    onChange={set('cta_text')}
+                    placeholder="e.g. Managed for you from £99/month"
+                    maxLength={120}
+                  />
+                  <p style={hintStyle}>
+                    Shown below the CTA headline in the PDF footer.
+                    Leave blank for a clean footer — avoid showing prices here unless you have fixed pricing.
+                  </p>
                 </div>
               </section>
 

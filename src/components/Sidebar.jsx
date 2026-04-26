@@ -60,6 +60,12 @@ export default function Sidebar({ active, extra = [] }) {
           <div className={styles.userDot} />
           <span>{user?.email}</span>
         </div>
+        <button
+          className={styles.themeToggle}
+          onClick={() => window.$crisp?.push(['do', 'chat:open'])}
+        >
+          Help & support
+        </button>
         <button className={styles.themeToggle} onClick={toggleTheme}>
           {theme === 'dark' ? '☀ Light mode' : '◑ Dark mode'}
         </button>

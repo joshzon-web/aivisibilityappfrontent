@@ -338,3 +338,10 @@
   background: rgba(56,189,248,0.1) !important;
   font-weight: 600;
 }
+
+@media (max-width: 768px) {
+  .main {
+    margin-left: 0;
+    max-width: 100vw;
+  }
+}

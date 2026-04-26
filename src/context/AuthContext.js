@@ -62,6 +62,10 @@ export function AuthProvider({ children }) {
         setUser(res.data);
         localStorage.setItem('user', JSON.stringify(res.data));
         fetchBrand(); // non-blocking — don't delay page render
+        // Re-identify in Crisp on page refresh (Crisp may not have the session yet)
+        if (window.$crisp && res.data?.email) {
+          window.$crisp.push(['set', 'user:email', [res.data.email]]);
+        }
       })
       .catch((err) => {
         const status = err?.response?.status;
@@ -82,6 +86,10 @@ export function AuthProvider({ children }) {
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
     fetchBrand();
+    // Identify user in Crisp support widget
+    if (window.$crisp && userData?.email) {
+      window.$crisp.push(['set', 'user:email', [userData.email]]);
+    }
   };
 
   const logoutUser = () => {
@@ -89,6 +97,10 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('user');
     setUser(null);
     setBrand(DEFAULT_BRAND);
+    // Reset Crisp session so next user starts fresh
+    if (window.$crisp) {
+      window.$crisp.push(['do', 'session:reset']);
+    }
   };
 
   const refreshBrand = fetchBrand;

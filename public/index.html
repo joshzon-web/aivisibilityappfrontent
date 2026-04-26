@@ -27,6 +27,16 @@
     <title>React App</title>
     <!-- Apply saved theme before React mounts to prevent flash -->
     <script>(function(){var t=localStorage.getItem('theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();</script>
+    <!-- Crisp support chat widget -->
+    <script type="text/javascript">
+      window.$crisp=[];
+      window.CRISP_WEBSITE_ID="ec69997e-e2fd-430a-99bb-83a47c598148";
+      (function(){
+        var d=document,s=d.createElement("script");
+        s.src="https://client.crisp.chat/l.js";
+        s.async=1;d.getElementsByTagName("head")[0].appendChild(s);
+      })();
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
