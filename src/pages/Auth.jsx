@@ -402,6 +402,12 @@ export default function Auth() {
             {mode === 'login' ? 'Sign up' : 'Sign in'}
           </button>
         </p>
+
+        <p className={styles.pricingLink}>
+          <button className={styles.toggleBtn} onClick={() => navigate('/pricing')}>
+            See pricing & plans →
+          </button>
+        </p>
       </div>
     </div>
   );

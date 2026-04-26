@@ -1,0 +1,268 @@
+.page {
+  min-height: 100vh;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ── Nav ─────────────────────────────────────────────────── */
+.nav {
+  width: 100%;
+  max-width: 1000px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 32px;
+}
+
+.navLogo { cursor: pointer; }
+
+.navActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.themeToggle {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-family: 'DM Mono', monospace;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 6px;
+  transition: color var(--duration-fast);
+}
+.themeToggle:hover { color: var(--text); }
+
+.signInBtn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-family: 'DM Mono', monospace;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color var(--duration-fast), color var(--duration-fast);
+}
+.signInBtn:hover { border-color: var(--text); color: var(--text); }
+
+/* ── Hero ────────────────────────────────────────────────── */
+.hero {
+  text-align: center;
+  padding: 48px 32px 56px;
+  max-width: 620px;
+}
+
+.badge {
+  display: inline-block;
+  font-size: var(--text-xs);
+  font-family: 'DM Mono', monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent2);
+  background: rgba(110, 231, 183, 0.12);
+  border: 1px solid rgba(110, 231, 183, 0.25);
+  border-radius: 999px;
+  padding: 5px 14px;
+  margin-bottom: 24px;
+}
+
+.headline {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.15;
+  margin-bottom: 16px;
+}
+
+.sub {
+  font-size: var(--text-base);
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+/* ── Plan grid ───────────────────────────────────────────── */
+.grid {
+  display: flex;
+  gap: 20px;
+  padding: 0 32px;
+  max-width: 1000px;
+  width: 100%;
+  align-items: stretch;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.card {
+  flex: 1;
+  min-width: 260px;
+  max-width: 320px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: box-shadow var(--duration-normal), border-color var(--duration-normal);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.cardRecommended {
+  border-color: var(--accent2);
+  background: rgba(110, 231, 183, 0.03);
+}
+
+.recommendedBadge {
+  position: absolute;
+  top: -13px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: var(--text-xs);
+  font-family: 'DM Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent2);
+  background: var(--bg-card);
+  border: 1px solid var(--accent2);
+  border-radius: 999px;
+  padding: 3px 14px;
+  white-space: nowrap;
+}
+
+/* Fix recommended badge bg on recommended card */
+.cardRecommended .recommendedBadge {
+  background: var(--bg-card);
+}
+
+.cardHeader {
+  margin-bottom: 24px;
+}
+
+.planName {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.planDesc {
+  font-size: var(--text-sm);
+  color: var(--muted);
+  line-height: 1.5;
+  margin-bottom: 18px;
+}
+
+.priceRow {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.price {
+  font-family: 'Syne', sans-serif;
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1;
+}
+
+.cardRecommended .price {
+  color: var(--accent2);
+}
+
+.period {
+  font-size: var(--text-sm);
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+}
+
+/* ── Features ────────────────────────────────────────────── */
+.features {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  margin-bottom: 28px;
+}
+
+.feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: var(--text-sm);
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.check {
+  color: var(--accent2);
+  font-size: var(--text-sm);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ── CTA button ──────────────────────────────────────────── */
+.cta {
+  width: 100%;
+  padding: 12px 0;
+  border-radius: 10px;
+  font-size: var(--text-sm);
+  font-family: 'DM Mono', monospace;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity var(--duration-fast), transform var(--duration-fast);
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--text);
+}
+
+.cta:hover {
+  opacity: 0.85;
+  transform: translateY(-1px);
+}
+
+.ctaRecommended {
+  background: var(--accent2);
+  border-color: var(--accent2);
+  color: #0a1f17;
+}
+
+/* ── Footer ──────────────────────────────────────────────── */
+.footnote {
+  margin-top: 40px;
+  font-size: var(--text-xs);
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+  text-align: center;
+}
+
+.existing {
+  margin-top: 16px;
+  margin-bottom: 48px;
+  font-size: var(--text-sm);
+  color: var(--muted);
+  text-align: center;
+}
+
+.existingLink {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: var(--text-sm);
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}

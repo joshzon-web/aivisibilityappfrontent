@@ -1,7 +1,7 @@
 .sidebar {
   width: 240px;
   min-height: 100vh;
-  background: #070c13;
+  background: var(--bg-card);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
@@ -76,6 +76,25 @@
   border-radius: 50%;
   background: var(--accent2);
   flex-shrink: 0;
+}
+
+.themeToggle {
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--muted);
+  border-radius: 8px;
+  padding: 7px 8px;
+  font-size: 0.75rem;
+  font-family: 'DM Mono', monospace;
+  text-align: left;
+  cursor: pointer;
+  transition: color var(--duration-fast);
+  margin-bottom: 4px;
+}
+
+.themeToggle:hover {
+  color: var(--text);
 }
 
 .logoutBtn {

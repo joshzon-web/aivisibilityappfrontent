@@ -138,6 +138,13 @@
   cursor: pointer;
 }
 
+.pricingLink {
+  margin-top: 12px;
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
 /* Side-by-side first / last name inputs */
 .nameRow {
   display: grid;

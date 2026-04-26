@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { ToastProvider } from './components/Toast';
 import { ConfirmModalProvider } from './components/ConfirmModal';
 import Auth from './pages/Auth';
@@ -12,6 +13,7 @@ import ScanResult from './pages/ScanResult';
 import Business from './pages/Business';
 import Prospecting from './pages/Prospecting';
 import Settings from './pages/Settings';
+import Pricing from './pages/Pricing';
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -41,6 +43,7 @@ function PublicRoute({ children }) {
 export default function App() {
   return (
     <BrowserRouter>
+      <ThemeProvider>
       <AuthProvider>
         <ToastProvider>
           <ConfirmModalProvider>
@@ -55,12 +58,14 @@ export default function App() {
               <Route path="/business/:id" element={<PrivateRoute><Business /></PrivateRoute>} />
               <Route path="/prospecting" element={<PrivateRoute><Prospecting /></PrivateRoute>} />
               <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
+              <Route path="/pricing" element={<Pricing />} />
               <Route path="/share/scan/:token" element={<ScanResult publicMode={true} />} />
               <Route path="*" element={<Navigate to="/auth" replace />} />
             </Routes>
           </ConfirmModalProvider>
         </ToastProvider>
       </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }

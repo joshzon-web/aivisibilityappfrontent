@@ -63,54 +63,73 @@ function PlanCard({ planKey, currentPlan, hasSubscription, onUpgrade, onPortal, 
     }
   };
 
+  const isRecommended = planKey === 'agency' && !isCurrent;
+
   return (
     <div style={{
-      border: `1px solid ${isCurrent ? 'var(--accent)' : 'var(--border)'}`,
-      borderRadius: 12, padding: '20px 24px',
-      background: isCurrent ? 'rgba(56,189,248,0.04)' : 'var(--bg-card)',
+      border: `1px solid ${isCurrent ? 'var(--accent)' : isRecommended ? 'var(--accent2)' : 'var(--border)'}`,
+      borderRadius: 'var(--radius)', padding: '28px 28px',
+      background: isCurrent ? 'rgba(56,189,248,0.04)' : isRecommended ? 'rgba(110,231,183,0.03)' : 'var(--bg-card)',
       flex: 1, minWidth: 200,
+      display: 'flex', flexDirection: 'column',
     }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-        <div>
-          <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text)' }}>{plan.display}</div>
-          <div style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--accent)', marginTop: 2 }}>{plan.price}</div>
-        </div>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+        <div style={{ fontWeight: 700, fontSize: '1.05rem', color: 'var(--text)' }}>{plan.display}</div>
         {isCurrent && (
           <span style={{
-            fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase',
+            fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
             background: 'rgba(56,189,248,0.15)', color: 'var(--accent)', borderRadius: 20, padding: '3px 10px',
-          }}>
-            Current
-          </span>
+          }}>Current</span>
+        )}
+        {isRecommended && (
+          <span style={{
+            fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
+            background: 'rgba(110,231,183,0.15)', color: 'var(--accent2)', borderRadius: 20, padding: '3px 10px',
+          }}>Most popular</span>
         )}
       </div>
-      <ul style={{ margin: '0 0 16px', padding: '0 0 0 16px', fontSize: '0.8rem', color: 'var(--muted)', lineHeight: 1.8 }}>
+
+      {/* Price */}
+      <div style={{ fontSize: '1.6rem', fontWeight: 800, color: isCurrent ? 'var(--accent)' : isRecommended ? 'var(--accent2)' : 'var(--text)', marginBottom: 20, fontFamily: "'Syne', sans-serif" }}>
+        {plan.price}
+      </div>
+
+      {/* Features — grows to fill card height */}
+      <ul style={{ margin: 0, padding: '0 0 0 16px', fontSize: '0.82rem', color: 'var(--muted)', lineHeight: 1.9, flex: 1, marginBottom: 24 }}>
         {(PLAN_FEATURES[planKey] || []).map(f => <li key={f}>{f}</li>)}
       </ul>
-      {!isCurrent && !isDowngrade && (
-        <button
-          onClick={handleUpgradeClick}
-          disabled={upgrading === planKey || portalLoading}
-          style={{
-            width: '100%', padding: '9px 0', borderRadius: 8, fontSize: '0.85rem',
-            background: 'var(--accent)', border: 'none', color: 'var(--bg)',
-            fontWeight: 700, cursor: 'pointer',
-            opacity: (upgrading === planKey || portalLoading) ? 0.6 : 1,
-          }}
-        >
-          {portalLoading ? 'Redirecting…' : upgrading === planKey ? 'Redirecting…' : `Upgrade to ${plan.display}`}
-        </button>
-      )}
-      {!isCurrent && !isDowngrade && hasSubscription && (
-        <p style={{ fontSize: '0.72rem', color: 'var(--muted)', textAlign: 'center', margin: '8px 0 0' }}>
-          Prorated — you only pay the difference
-        </p>
-      )}
-      {isDowngrade && (
-        <p style={{ fontSize: '0.75rem', color: 'var(--muted)', textAlign: 'center', margin: 0 }}>
-          Downgrade via subscription portal
-        </p>
-      )}
+
+      {/* Button — always at bottom */}
+      <div>
+        {!isCurrent && !isDowngrade && (
+          <button
+            onClick={handleUpgradeClick}
+            disabled={upgrading === planKey || portalLoading}
+            style={{
+              width: '100%', padding: '11px 0', borderRadius: 10, fontSize: '0.88rem',
+              background: isRecommended ? 'var(--accent2)' : 'var(--accent)',
+              border: 'none',
+              color: isRecommended ? '#0a1f17' : 'var(--bg)',
+              fontWeight: 700, cursor: 'pointer', fontFamily: "'DM Mono', monospace",
+              opacity: (upgrading === planKey || portalLoading) ? 0.6 : 1,
+              transition: 'opacity 0.15s, transform 0.15s',
+            }}
+          >
+            {portalLoading ? 'Redirecting…' : upgrading === planKey ? 'Redirecting…' : `Upgrade to ${plan.display}`}
+          </button>
+        )}
+        {!isCurrent && !isDowngrade && hasSubscription && (
+          <p style={{ fontSize: '0.72rem', color: 'var(--muted)', textAlign: 'center', margin: '8px 0 0' }}>
+            Prorated — you only pay the difference
+          </p>
+        )}
+        {isDowngrade && (
+          <p style={{ fontSize: '0.78rem', color: 'var(--muted)', textAlign: 'center', margin: 0 }}>
+            Downgrade via subscription portal
+          </p>
+        )}
+      </div>
     </div>
   );
 }
@@ -312,7 +331,7 @@ function BillingTab() {
         <section style={{ marginBottom: 36 }}>
           <h2 style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--muted)', letterSpacing: '0.06em',
             textTransform: 'uppercase', marginBottom: 16 }}>Upgrade</h2>
-          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'stretch' }}>
             {upgradablePlans.map(p => (
               <PlanCard key={p} planKey={p} currentPlan={plan}
                 hasSubscription={status?.has_subscription}
@@ -335,7 +354,7 @@ function BillingTab() {
         <section>
           <h2 style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--muted)', letterSpacing: '0.06em',
             textTransform: 'uppercase', marginBottom: 16 }}>All plans</h2>
-          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'stretch' }}>
             {['solo', 'agency', 'pro'].map(p => (
               <PlanCard key={p} planKey={p} currentPlan={plan}
                 hasSubscription={false}
@@ -360,10 +379,9 @@ export default function Settings() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Tab: 'whitelabel' | 'billing'
-  const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') === 'billing' ? 'billing' : 'whitelabel');
+  const activeTab = searchParams.get('tab') === 'billing' ? 'billing' : 'whitelabel';
 
   const switchTab = (tab) => {
-    setActiveTab(tab);
     setSearchParams(tab === 'billing' ? { tab: 'billing' } : {}, { replace: true });
   };
 

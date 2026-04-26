@@ -47,6 +47,21 @@
   --z-toast:    9999;
 }
 
+/* ── Light theme overrides ───────────────────────────────── */
+[data-theme="light"] {
+  --bg:      #f0f4f8;
+  --bg-card: #ffffff;
+  --border:  #dde3ea;
+  --text:    #0f1923;
+  --muted:   #6b7f94;
+
+  /* Accent colours are brand/data colours — unchanged in light mode */
+
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.07);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.13);
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {

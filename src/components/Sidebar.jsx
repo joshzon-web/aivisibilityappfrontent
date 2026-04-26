@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import BrandLogo from './BrandLogo';
 import { SidebarQuota } from './TrialBanner';
 import styles from './Sidebar.module.css';
@@ -16,6 +17,7 @@ import styles from './Sidebar.module.css';
  */
 export default function Sidebar({ active, extra = [] }) {
   const { user, logoutUser } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   const navCls = (key) =>
@@ -36,19 +38,19 @@ export default function Sidebar({ active, extra = [] }) {
         ))}
 
         <button className={navCls('dashboard')} onClick={() => navigate('/dashboard')}>
-          ▦ Clients
+          Clients
         </button>
         <button className={navCls('all-businesses')} onClick={() => navigate('/all-businesses')}>
-          ≡ All businesses
+          All businesses
         </button>
         <button className={navCls('prospecting')} onClick={() => navigate('/prospecting')}>
-          ◈ Prospecting
+          Prospecting
         </button>
         <button className={navCls('whitelabel')} onClick={() => navigate('/settings')}>
-          ◈ White-label
+          White-label
         </button>
         <button className={navCls('billing')} onClick={() => navigate('/settings?tab=billing')}>
-          💳 Billing
+          Billing
         </button>
       </nav>
 
@@ -58,6 +60,9 @@ export default function Sidebar({ active, extra = [] }) {
           <div className={styles.userDot} />
           <span>{user?.email}</span>
         </div>
+        <button className={styles.themeToggle} onClick={toggleTheme}>
+          {theme === 'dark' ? '☀ Light mode' : '◑ Dark mode'}
+        </button>
         <button className={styles.logoutBtn} onClick={logoutUser}>
           Sign out
         </button>

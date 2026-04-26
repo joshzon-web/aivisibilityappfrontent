@@ -3,7 +3,7 @@
 .sidebar {
   width: 240px;
   min-height: 100vh;
-  background: #070c13;
+  background: var(--bg-card);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
