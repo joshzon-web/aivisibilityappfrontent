@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { getBusinessScans, getBusiness, runScan, updateBusinessSchedule, deleteScan, getBusinessTerms, updateBusinessSearchLabel } from '../api/client';
-import BrandLogo from '../components/BrandLogo';
 import { useAuth } from '../context/AuthContext';
+import { useConfirm } from '../components/ConfirmModal';
+import Sidebar from '../components/Sidebar';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import styles from './Business.module.css';
 
 export default function Business() {
   const { id } = useParams();
   const location = useLocation();
-  const { user, logoutUser } = useAuth();
+  const { user } = useAuth();
+  const { confirm } = useConfirm();
   const navigate = useNavigate();
   const [scans, setScans] = useState([]);
   const [business, setBusiness] = useState(null);
@@ -104,7 +106,13 @@ export default function Business() {
 
   const handleDeleteScan = async (scanId, e) => {
     e.stopPropagation();
-    if (!window.confirm('Delete this scan? This cannot be undone.')) return;
+    const ok = await confirm({
+      title: 'Delete this scan?',
+      message: 'This scan and its data will be permanently removed. This cannot be undone.',
+      confirmLabel: 'Delete',
+      danger: true,
+    });
+    if (!ok) return;
     try {
       await deleteScan(scanId);
       setScans(prev => prev.filter(s => s.id !== scanId));
@@ -208,22 +216,7 @@ export default function Business() {
 
   return (
     <div className={styles.layout}>
-      <aside className={styles.sidebar}>
-        <div className={styles.logo} onClick={() => navigate('/dashboard')} style={{ cursor: 'pointer' }}>
-          <BrandLogo height={28} onClick={() => navigate('/dashboard')} />
-        </div>
-        <nav className={styles.nav}>
-          <button className={styles.navItem} onClick={() => navigate('/dashboard')}>← Dashboard</button>
-          <button className={styles.navItem} onClick={() => navigate('/prospecting')}>◈ Prospecting</button>
-        </nav>
-        <div className={styles.sidebarFooter}>
-          <div className={styles.userInfo}>
-            <div className={styles.userDot} />
-            <span>{user?.email}</span>
-          </div>
-          <button className={styles.logoutBtn} onClick={logoutUser}>Sign out</button>
-        </div>
-      </aside>
+      <Sidebar extra={[{ label: '← Back', onClick: () => navigate(-1) }]} />
 
       <main className={styles.main}>
         <div className={styles.header + ' fade-up'}>

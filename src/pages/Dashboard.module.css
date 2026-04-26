@@ -3,102 +3,15 @@
   min-height: 100vh;
 }
 
-/* Sidebar */
-.sidebar {
-  width: 240px;
-  min-height: 100vh;
-  background: #070c13;
-  border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  padding: 24px 16px;
-  position: fixed;
-  top: 0; left: 0; bottom: 0;
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 12px 24px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 20px;
-}
-
-.logoMark { font-size: 1.2rem; color: var(--accent); }
-
-.logoText {
-  font-family: 'Syne', sans-serif;
-  font-weight: 800;
-  font-size: 0.8rem;
-  letter-spacing: 0.12em;
-  color: var(--accent);
-}
-
-.nav { flex: 1; }
-
-.navItem {
-  width: 100%;
-  text-align: left;
-  background: none;
-  border: none;
-  color: var(--muted);
-  padding: 10px 12px;
-  border-radius: 8px;
-  font-size: 0.82rem;
-  letter-spacing: 0.04em;
-  transition: all 0.15s;
-  cursor: pointer;
-}
-
-.navItem:hover { background: rgba(56,189,248,0.06); color: var(--text); }
-.navItem.active { background: rgba(56,189,248,0.1); color: var(--accent); }
-
-.sidebarFooter {
-  border-top: 1px solid var(--border);
-  padding-top: 16px;
-}
-
-.userInfo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.78rem;
-  color: var(--muted);
-  padding: 8px 12px;
-  margin-bottom: 8px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.userDot {
-  width: 7px; height: 7px;
-  border-radius: 50%;
-  background: var(--accent2);
-  flex-shrink: 0;
-}
-
-.logoutBtn {
-  width: 100%;
-  background: none;
-  border: 1px solid var(--border);
-  color: var(--muted);
-  border-radius: 8px;
-  padding: 8px;
-  font-size: 0.78rem;
-  transition: all 0.15s;
-  cursor: pointer;
-}
-
-.logoutBtn:hover { border-color: var(--red); color: var(--red); }
-
 /* Main */
 .main {
   margin-left: 240px;
   flex: 1;
-  padding: 40px 48px;
   max-width: calc(100vw - 240px);
+}
+
+.mainPad {
+  padding: 40px 48px;
 }
 
 .header {
@@ -433,4 +346,183 @@
 .onboardingStepSub {
   font-size: 0.78rem;
   color: var(--muted);
+}
+
+/* ── Client avatar ───────────────────────────────────────── */
+.avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+/* ── Stats row (business count + avg score) ──────────────── */
+.statsRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 10px 0 14px;
+}
+
+.statPill {
+  font-size: var(--text-xs);
+  font-family: 'DM Mono', monospace;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px 10px;
+  color: var(--muted);
+}
+
+/* ── ⋯ dropdown menu ─────────────────────────────────────── */
+.menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-md);
+  z-index: var(--z-dropdown);
+  min-width: 130px;
+  overflow: hidden;
+}
+
+.menuItem {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  color: var(--text);
+  padding: 10px 14px;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: background var(--duration-fast);
+}
+.menuItem:hover { background: rgba(255,255,255,0.05); }
+
+.menuItemDanger { color: var(--red); }
+.menuItemDanger:hover { background: rgba(248,113,113,0.08); }
+
+/* ── Inline edit form (inside card) ─────────────────────── */
+.editForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.editActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+/* ── New client form card ────────────────────────────────── */
+.formCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 28px;
+}
+
+.formTitle {
+  font-size: var(--text-sm);
+  font-family: 'DM Mono', monospace;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.formRow {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.formField {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: var(--text-xs);
+  font-family: 'DM Mono', monospace;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 12px;
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-family: inherit;
+  outline: none;
+  transition: border-color var(--duration-fast);
+  width: 100%;
+  box-sizing: border-box;
+}
+.input:focus { border-color: var(--accent); }
+.input::placeholder { color: var(--muted); opacity: 0.7; }
+
+.submitBtn {
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  border-radius: 8px;
+  padding: 9px 20px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  font-family: 'DM Mono', monospace;
+  cursor: pointer;
+  transition: opacity var(--duration-fast), transform var(--duration-fast);
+}
+.submitBtn:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
+.submitBtn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.cancelBtn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--muted);
+  padding: 9px 16px;
+  font-size: var(--text-sm);
+  font-family: 'DM Mono', monospace;
+  cursor: pointer;
+  transition: border-color var(--duration-fast), color var(--duration-fast);
+}
+.cancelBtn:hover { border-color: var(--text); color: var(--text); }
+
+/* ── Loading skeletons ───────────────────────────────────── */
+.skeletonGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.skeletonCard {
+  height: 190px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
 }

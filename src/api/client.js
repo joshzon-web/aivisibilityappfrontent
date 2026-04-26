@@ -128,6 +128,11 @@ export const deleteClient = (id) => api.delete(`/clients/${id}`);
 export const assignBusinessToClient = (bizId, clientId) =>
   api.post(`/businesses/${bizId}/assign-client`, { client_id: clientId });
 
+// Billing
+export const getBillingStatus    = ()     => api.get('/billing/status');
+export const createCheckout      = (plan) => api.post('/billing/checkout', { plan });
+export const createPortalSession = ()     => api.post('/billing/portal');
+
 // Public — no auth header sent (uses raw axios)
 export const getSharedScan = (token) =>
   axios.get(`${API_URL}/share/scan/${token}`).then(r => r.data);

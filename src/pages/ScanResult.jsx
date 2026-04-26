@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getScan, getSharedScan, getShareInfo, createShareLink, extendShareLink, revokeShareLink } from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { useConfirm } from '../components/ConfirmModal';
 import BrandLogo from '../components/BrandLogo';
+import Sidebar from '../components/Sidebar';
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell, LabelList } from 'recharts';
 import styles from './ScanResult.module.css';
 
@@ -159,8 +161,8 @@ export default function ScanResult({ publicMode = false }) {
   const shareToken = publicMode ? params.token : null;
 
   const auth = useAuth();
-  const logoutUser = auth?.logoutUser;
   const user = auth?.user;
+  const { confirm } = useConfirm();
   const navigate = useNavigate();
   const [scan, setScan] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -255,7 +257,13 @@ export default function ScanResult({ publicMode = false }) {
   };
 
   const handleRevokeShare = async () => {
-    if (!window.confirm('Revoke this share link? Anyone with the URL will lose access immediately.')) return;
+    const ok = await confirm({
+      title: 'Revoke share link?',
+      message: 'Anyone with the URL will lose access immediately. This cannot be undone.',
+      confirmLabel: 'Revoke',
+      danger: true,
+    });
+    if (!ok) return;
     setShareLoading(true);
     try {
       await revokeShareLink(id);
@@ -385,27 +393,7 @@ const perplexityTotal = perplexityChecks.length;
   return (
     <div className={styles.layout}>
       {!publicMode && (
-        <aside className={styles.sidebar}>
-          <div className={styles.logo} onClick={() => navigate('/dashboard')} style={{cursor:'pointer'}}>
-            <BrandLogo height={28} />
-          </div>
-          <nav className={styles.nav}>
-            <button className={styles.navItem} onClick={() => navigate('/dashboard')}>← Dashboard</button>
-            {businessId && (
-              <button className={styles.navItem} onClick={() => navigate(`/business/${businessId}`)}>
-                ↩ {businessName}
-              </button>
-            )}
-            <button className={styles.navItem} onClick={() => navigate('/prospecting')}>◈ Prospecting</button>
-          </nav>
-          <div className={styles.sidebarFooter}>
-            <div className={styles.userInfo}>
-              <div className={styles.userDot} />
-              <span>{user?.email}</span>
-            </div>
-            <button className={styles.logoutBtn} onClick={logoutUser}>Sign out</button>
-          </div>
-        </aside>
+        <Sidebar extra={businessId ? [{ label: `↩ ${businessName}`, onClick: () => navigate(`/business/${businessId}`) }] : []} />
       )}
 
       <main className={styles.main} style={publicMode ? { marginLeft: 0, maxWidth: '100vw' } : undefined}>

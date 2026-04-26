@@ -2,20 +2,7 @@ import { useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { resetPassword } from '../api/client';
 import styles from './Auth.module.css';
-
-function getStrength(pw) {
-  if (!pw) return 0;
-  let score = 0;
-  if (pw.length >= 8)  score++;
-  if (pw.length >= 12) score++;
-  if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
-  if (/[0-9]/.test(pw)) score++;
-  if (/[^A-Za-z0-9]/.test(pw)) score++;
-  return Math.min(score, 4);
-}
-
-const STRENGTH_LABEL = ['', 'Weak', 'Fair', 'Good', 'Strong'];
-const STRENGTH_COLOR = ['', 'var(--red)', 'var(--orange)', '#f59e0b', 'var(--accent2)'];
+import { getPasswordStrength as getStrength, STRENGTH_LABEL, STRENGTH_COLOR } from '../hooks/usePasswordStrength';
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();

@@ -6,15 +6,19 @@ import {
 } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
+import { useConfirm } from '../components/ConfirmModal';
+import Sidebar from '../components/Sidebar';
 import NewScan from '../components/NewScan';
-import BrandLogo from '../components/BrandLogo';
 import EmptyState from '../components/EmptyState';
+import TrialBanner from '../components/TrialBanner';
 import styles from './Dashboard.module.css';
+import cdStyles from './ClientDetail.module.css';
 
 export default function ClientDetail() {
   const { id: clientId } = useParams();
-  const { user, logoutUser } = useAuth();
+  const { user } = useAuth();
   const { showToast } = useToast();
+  const { confirm } = useConfirm();
   const navigate = useNavigate();
 
   const [businesses, setBusinesses] = useState([]);
@@ -30,9 +34,7 @@ export default function ClientDetail() {
   const [autoSend, setAutoSend] = useState(false);
   const [togglingAutoSend, setTogglingAutoSend] = useState(false);
 
-  const userId = user?.id;
-  useEffect(() => {
-    if (!userId) return;
+  const loadData = () => {
     setLoading(true);
     setLoadError(false);
     Promise.all([listBusinesses(), listClients()])
@@ -44,7 +46,10 @@ export default function ClientDetail() {
       })
       .catch(() => setLoadError(true))
       .finally(() => setLoading(false));
-  }, [clientId, userId]);
+  };
+
+  const userId = user?.id;
+  useEffect(() => { if (userId) loadData(); }, [clientId, userId]); // eslint-disable-line
 
   // Close ⋯ menu on outside click
   useEffect(() => {
@@ -57,22 +62,28 @@ export default function ClientDetail() {
   }, [openMenuId]);
 
   const handleScanComplete = async (scanId, businessId) => {
-    // Auto-assign the new business to this client
     if (businessId) {
-      try {
-        await assignBusinessToClient(businessId, clientId);
-      } catch {
-        // Silent — scan still succeeded
-      }
+      try { await assignBusinessToClient(businessId, clientId); } catch { /* silent */ }
     }
     navigate(`/scan/${scanId}`);
   };
 
-  const handleDelete = async (id, e) => {
+  const handleDelete = async (biz, e) => {
     e.stopPropagation();
-    if (!window.confirm('Remove this business from tracking?')) return;
-    await deleteBusiness(id);
-    setBusinesses(prev => prev.filter(b => b.id !== id));
+    const ok = await confirm({
+      title: `Remove "${biz.name}"?`,
+      message: 'This business and all its scans will be permanently removed. This cannot be undone.',
+      confirmLabel: 'Remove',
+      danger: true,
+    });
+    if (!ok) return;
+    try {
+      await deleteBusiness(biz.id);
+      setBusinesses(prev => prev.filter(b => b.id !== biz.id));
+      showToast(`"${biz.name}" removed`, 'success');
+    } catch {
+      showToast('Could not remove business', 'error');
+    }
   };
 
   const handleToggleAutoSend = async () => {
@@ -121,7 +132,6 @@ export default function ClientDetail() {
     return (latestDt - compDt) < 25 * 24 * 60 * 60 * 1000;
   };
 
-  // Filter to this client, then apply search/score/sort
   const filtered = useMemo(() => {
     let list = businesses.filter(b => b.client_id === clientId);
 
@@ -164,42 +174,26 @@ export default function ClientDetail() {
 
   return (
     <div className={styles.layout}>
-      {/* Sidebar */}
-      <aside className={styles.sidebar}>
-        <div className={styles.logo}><BrandLogo height={28} /></div>
-        <nav className={styles.nav}>
-          <button className={styles.navItem} onClick={() => navigate('/dashboard')}>▦ Clients</button>
-          <button className={styles.navItem} onClick={() => navigate('/all-businesses')}>≡ All businesses</button>
-          <button className={styles.navItem} onClick={() => navigate('/prospecting')}>◈ Prospecting</button>
-          <button className={styles.navItem} onClick={() => navigate('/settings')}>◈ White-label</button>
-        </nav>
-        <div className={styles.sidebarFooter}>
-          <div className={styles.userInfo}>
-            <div className={styles.userDot} />
-            <span>{user?.email}</span>
-          </div>
-          <button className={styles.logoutBtn} onClick={logoutUser}>Sign out</button>
-        </div>
-      </aside>
+      <Sidebar active="dashboard" />
 
-      {/* Main */}
-      <main className={styles.main}>
+      <main className={styles.main} style={{ padding: 0 }}>
+        <TrialBanner />
         {showNewScan ? (
-          <NewScan
-            clientId={clientId}
-            onComplete={handleScanComplete}
-            onCancel={() => setShowNewScan(false)}
-          />
+          <div className={styles.mainPad}>
+            <NewScan
+              clientId={clientId}
+              onComplete={handleScanComplete}
+              onCancel={() => setShowNewScan(false)}
+            />
+          </div>
         ) : (
-          <>
-            {/* Back + header */}
-            <button
-              onClick={() => navigate('/dashboard')}
-              style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: '0.82rem', marginBottom: '20px', padding: 0 }}
-            >
+          <div className={styles.mainPad}>
+            {/* Back */}
+            <button className={cdStyles.backBtn} onClick={() => navigate('/dashboard')}>
               ← Back to clients
             </button>
 
+            {/* Header */}
             <div className={styles.header + ' fade-up'}>
               <div>
                 <h1 className={styles.title}>{client?.name || '…'}</h1>
@@ -212,34 +206,19 @@ export default function ClientDetail() {
                   {clientBizCount} business{clientBizCount !== 1 ? 'es' : ''} tracked
                 </p>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div className={cdStyles.headerActions}>
                 {/* Auto-send toggle */}
                 <button
+                  className={cdStyles.autoSendBtn}
                   onClick={handleToggleAutoSend}
                   disabled={togglingAutoSend}
                   title={client?.contact_email ? undefined : 'Add a contact email first'}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '8px',
-                    background: 'none', border: 'none', cursor: client?.contact_email ? 'pointer' : 'not-allowed',
-                    padding: '6px 0', opacity: togglingAutoSend ? 0.5 : 1,
-                  }}
+                  style={{ opacity: togglingAutoSend ? 0.5 : 1, cursor: client?.contact_email ? 'pointer' : 'not-allowed' }}
                 >
-                  {/* Toggle pill */}
-                  <div style={{
-                    width: '36px', height: '20px', borderRadius: '999px', flexShrink: 0,
-                    background: autoSend ? 'var(--accent2)' : 'var(--border)',
-                    position: 'relative', transition: 'background 0.2s',
-                  }}>
-                    <div style={{
-                      position: 'absolute', top: '3px',
-                      left: autoSend ? '19px' : '3px',
-                      width: '14px', height: '14px', borderRadius: '50%',
-                      background: '#fff', transition: 'left 0.2s',
-                    }} />
+                  <div className={cdStyles.togglePill} style={{ background: autoSend ? 'var(--accent2)' : 'var(--border)' }}>
+                    <div className={cdStyles.toggleDot} style={{ left: autoSend ? '19px' : '3px' }} />
                   </div>
-                  <span style={{ fontSize: '0.78rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>
-                    Auto-send reports
-                  </span>
+                  <span>Auto-send reports</span>
                 </button>
                 <button className={styles.newBtn} onClick={() => setShowNewScan(true)}>
                   + Track new business
@@ -248,11 +227,13 @@ export default function ClientDetail() {
             </div>
 
             {loading ? (
-              <div className={styles.loading}><div className={styles.spinner} /><span>Loading...</span></div>
+              <div className={styles.skeletonGrid}>
+                {[1, 2, 3].map(i => <div key={i} className={styles.skeletonCard} />)}
+              </div>
             ) : loadError ? (
               <EmptyState icon="⚠" title="Couldn't load data"
                 subtitle="Check your connection and try again."
-                action={{ label: 'Try again', onClick: () => { setLoadError(false); setLoading(true); Promise.all([listBusinesses(), listClients()]).then(([bizRes, clientRes]) => { setBusinesses(bizRes.data.businesses); const found = (clientRes.data.clients || []).find(c => c.id === clientId); setClient(found || null); }).catch(() => setLoadError(true)).finally(() => setLoading(false)); } }} />
+                action={{ label: 'Try again', onClick: loadData }} />
             ) : clientBizCount === 0 ? (
               <EmptyState
                 icon="◈"
@@ -327,7 +308,11 @@ export default function ClientDetail() {
                             </div>
                             <div className={styles.cardActions}>
                               <span className={styles.scanBadge} style={{ color: scoreColour(score) }}>{scoreLabel(score)}</span>
-                              <button className={styles.deleteBtn} onClick={e => handleDelete(biz.id, e)} title="Remove">✕</button>
+                              <button
+                                className={styles.deleteBtn}
+                                onClick={e => handleDelete(biz, e)}
+                                title="Remove"
+                              >✕</button>
                             </div>
                           </div>
 
@@ -371,7 +356,7 @@ export default function ClientDetail() {
                 )}
               </>
             )}
-          </>
+          </div>
         )}
       </main>
     </div>

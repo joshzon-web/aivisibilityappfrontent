@@ -3,21 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { login, signup, resendVerification, forgotPassword } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import styles from './Auth.module.css';
-
-// Password strength: returns 0–4
-function getStrength(pw) {
-  if (!pw) return 0;
-  let score = 0;
-  if (pw.length >= 8)  score++;
-  if (pw.length >= 12) score++;
-  if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
-  if (/[0-9]/.test(pw)) score++;
-  if (/[^A-Za-z0-9]/.test(pw)) score++;
-  return Math.min(score, 4);
-}
-
-const STRENGTH_LABEL = ['', 'Weak', 'Fair', 'Good', 'Strong'];
-const STRENGTH_COLOR = ['', 'var(--red)', 'var(--orange)', '#f59e0b', 'var(--accent2)'];
+import { getPasswordStrength as getStrength, STRENGTH_LABEL, STRENGTH_COLOR } from '../hooks/usePasswordStrength';
 
 export default function Auth() {
   const [mode, setMode] = useState('login'); // 'login' | 'signup'
@@ -150,8 +136,8 @@ export default function Auth() {
           <p className={styles.sub} style={{ marginBottom: '4px' }}>We sent a verification link to</p>
           <p style={{ fontWeight: 600, marginBottom: '16px', color: 'var(--text)' }}>{verifyEmail}</p>
           <p className={styles.sub} style={{ fontSize: '0.82rem', lineHeight: 1.6, marginBottom: 0 }}>
-            Click the link to activate your account. It expires in 24 hours.<br />
-            Check your spam folder if you don't see it.
+            Click the link to activate your account and start your 7-day free trial.<br />
+            The link expires in 24 hours — check your spam folder if you don't see it.
           </p>
 
           <button
@@ -263,12 +249,12 @@ export default function Auth() {
         </div>
 
         <h1 className={styles.title}>
-          {mode === 'login' ? 'Welcome back' : 'Create account'}
+          {mode === 'login' ? 'Welcome back' : 'Start your free trial'}
         </h1>
         <p className={styles.sub}>
           {mode === 'login'
             ? 'Sign in to your dashboard'
-            : 'Start tracking your AI search visibility'}
+            : '7 days free · No credit card required'}
         </p>
 
         <form onSubmit={handleSubmit} className={styles.form}>
@@ -403,7 +389,7 @@ export default function Auth() {
           <button type="submit" className={styles.btn} disabled={loading}>
             {loading
               ? 'Please wait…'
-              : mode === 'login' ? 'Sign in' : 'Create account'}
+              : mode === 'login' ? 'Sign in' : 'Start free trial'}
           </button>
         </form>
 

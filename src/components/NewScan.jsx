@@ -1,10 +1,13 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { searchBusinesses, runScan, probeBusinessLabel } from '../api/client';
 import styles from './NewScan.module.css';
+import { SCAN_STATUSES } from '../constants/scanStatuses';
 
 const STEPS = ['Search', 'Select', 'Scan'];
 
 export default function NewScan({ onComplete, onCancel, clientId = null }) {
+  const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
@@ -62,20 +65,11 @@ export default function NewScan({ onComplete, onCancel, clientId = null }) {
     setError('');
     setScanning(true);
 
-    const statuses = [
-      'Fetching business data...',
-      'Finding local competitors...',
-      'Running ChatGPT visibility scan...',
-      'Running Gemini visibility scan...',
-      'Scoring your AI presence...',
-      'Generating AI report...',
-    ];
-
     let i = 0;
-    setScanStatus(statuses[0]);
+    setScanStatus(SCAN_STATUSES[0]);
     const interval = setInterval(() => {
       i++;
-      if (i < statuses.length) setScanStatus(statuses[i]);
+      if (i < SCAN_STATUSES.length) setScanStatus(SCAN_STATUSES[i]);
     }, 8000);
 
     try {
@@ -91,7 +85,13 @@ export default function NewScan({ onComplete, onCancel, clientId = null }) {
       onComplete(res.data.scan_id, res.data.business_id);
     } catch (err) {
       clearInterval(interval);
-      setError(err.response?.data?.detail || 'Scan failed. Please try again.');
+      const status = err?.response?.status;
+      if (status === 402) {
+        // Quota or trial exceeded — show upgrade prompt, not a generic error
+        setError('__quota__:' + (err.response?.data?.detail || 'Scan limit reached.'));
+      } else {
+        setError(err.response?.data?.detail || 'Scan failed. Please try again.');
+      }
       setScanning(false);
       setScanStatus('');
     }
@@ -246,7 +246,26 @@ export default function NewScan({ onComplete, onCancel, clientId = null }) {
                     </>
                   )}
                 </div>
-                {error && <div className={styles.error}>{error}</div>}
+                {error && error.startsWith('__quota__:') ? (
+                  <div style={{
+                    background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)',
+                    borderRadius: 8, padding: '12px 16px', fontSize: '0.83rem', color: 'var(--red)',
+                  }}>
+                    <div style={{ marginBottom: 8 }}>{error.replace('__quota__:', '')}</div>
+                    <button
+                      type="button"
+                      onClick={() => navigate('/settings?tab=billing')}
+                      style={{
+                        padding: '6px 16px', borderRadius: 6, fontSize: '0.8rem', fontWeight: 700,
+                        background: 'var(--red)', color: '#fff', border: 'none', cursor: 'pointer',
+                      }}
+                    >
+                      View plans →
+                    </button>
+                  </div>
+                ) : error ? (
+                  <div className={styles.error}>{error}</div>
+                ) : null}
                 <div className={styles.btnRow}>
                   <button type="button" className={styles.cancelBtn} onClick={() => setStep(1)}>← Back</button>
                   <button type="submit" className={styles.btn}>Start scan →</button>

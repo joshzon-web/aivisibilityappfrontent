@@ -1,9 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap');
 
 :root {
+  /* Colours */
   --bg:        #060a0f;
   --bg-card:   #0c1420;
-  --bg-card2:  #101d2e;
   --border:    rgba(56, 189, 248, 0.1);
   --accent:    #38bdf8;
   --accent2:   #6ee7b7;
@@ -12,6 +12,39 @@
   --text:      #e2eaf4;
   --muted:     #5a7291;
   --radius:    14px;
+
+  /* Spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Typography */
+  --text-xs:   0.72rem;
+  --text-sm:   0.82rem;
+  --text-base: 0.9rem;
+  --text-md:   1rem;
+  --text-lg:   1.2rem;
+  --text-xl:   1.6rem;
+  --text-2xl:  2rem;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.4);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
+
+  /* Transitions */
+  --duration-fast:   0.15s;
+  --duration-normal: 0.25s;
+
+  /* Z-index scale */
+  --z-dropdown: 100;
+  --z-modal:    1000;
+  --z-toast:    9999;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }

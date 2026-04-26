@@ -2,24 +2,16 @@ import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { searchBusinesses, runProspectingScan } from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import BrandLogo from '../components/BrandLogo';
+import Sidebar from '../components/Sidebar';
+import { SCAN_STATUSES } from '../constants/scanStatuses';
 import styles from './Prospecting.module.css';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
 
 const STEPS = ['Search', 'Select', 'Results'];
 
-const SCAN_STATUSES = [
-  'Fetching business data...',
-  'Querying ChatGPT...',
-  'Querying Gemini...',
-  'Querying Perplexity...',
-  'Scoring AI visibility...',
-  'Finalising report...',
-];
-
 export default function Prospecting() {
-  const { user, logoutUser } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [step, setStep] = useState(0);
@@ -131,25 +123,8 @@ export default function Prospecting() {
 
   return (
     <div className={styles.layout}>
-      {/* Sidebar */}
-      <aside className={styles.sidebar}>
-        <div className={styles.logo} onClick={() => navigate('/dashboard')} style={{ cursor: 'pointer' }}>
-          <BrandLogo height={28} />
-        </div>
-        <nav className={styles.nav}>
-          <button className={styles.navItem} onClick={() => navigate('/dashboard')}>← Dashboard</button>
-          <button className={`${styles.navItem} ${styles.active}`}>◈ Prospecting</button>
-        </nav>
-        <div className={styles.sidebarFooter}>
-          <div className={styles.userInfo}>
-            <div className={styles.userDot} />
-            <span>{user?.email}</span>
-          </div>
-          <button className={styles.logoutBtn} onClick={logoutUser}>Sign out</button>
-        </div>
-      </aside>
+      <Sidebar active="prospecting" />
 
-      {/* Main */}
       <main className={styles.main}>
         {/* Page header */}
         <div className={styles.header + ' fade-up'}>

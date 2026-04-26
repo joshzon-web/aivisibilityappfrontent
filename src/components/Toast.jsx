@@ -42,13 +42,15 @@ function ToastContainer({ toasts, onDismiss }) {
   return (
     <div style={{
       position: 'fixed',
-      bottom: '24px',
-      right: '24px',
-      zIndex: 9999,
+      bottom: 'var(--space-6)',
+      right: 'var(--space-6)',
+      zIndex: 'var(--z-toast)',
       display: 'flex',
       flexDirection: 'column',
-      gap: '8px',
+      gap: 'var(--space-2)',
       pointerEvents: 'none',
+      maxHeight: '60vh',
+      overflow: 'hidden',
     }}>
       {toasts.map(t => (
         <ToastItem key={t.id} toast={t} onDismiss={onDismiss} />
@@ -58,12 +60,13 @@ function ToastContainer({ toasts, onDismiss }) {
 }
 
 function ToastItem({ toast, onDismiss }) {
-  const colors = {
-    success: { bg: '#1d9e75', border: '#17845f' },
-    error:   { bg: '#c8102e', border: '#a50d26' },
-    info:    { bg: '#378add', border: '#2b6dba' },
+  // Use theme colour variables; alpha backgrounds so the card feels in-theme
+  const colours = {
+    success: { accent: 'var(--accent2)',  bg: 'rgba(110,231,183,0.12)', border: 'rgba(110,231,183,0.4)' },
+    error:   { accent: 'var(--red)',      bg: 'rgba(248,113,113,0.12)', border: 'rgba(248,113,113,0.4)' },
+    info:    { accent: 'var(--accent)',   bg: 'rgba(56,189,248,0.12)',  border: 'rgba(56,189,248,0.4)'  },
   };
-  const { bg, border } = colors[toast.type] || colors.info;
+  const { accent, bg, border } = colours[toast.type] || colours.info;
 
   return (
     <div
@@ -71,16 +74,18 @@ function ToastItem({ toast, onDismiss }) {
       style={{
         pointerEvents: 'all',
         background: bg,
-        borderLeft: `4px solid ${border}`,
-        color: '#fff',
+        border: `1px solid ${border}`,
+        borderLeft: `3px solid ${accent}`,
+        color: 'var(--text)',
         padding: '10px 16px',
-        borderRadius: '6px',
-        fontSize: '0.85rem',
+        borderRadius: '8px',
+        fontSize: 'var(--text-sm)',
         fontWeight: 500,
         maxWidth: '320px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+        boxShadow: 'var(--shadow-md)',
         cursor: 'pointer',
-        animation: 'toastIn 0.25s ease',
+        animation: 'toastIn 0.2s ease',
+        backdropFilter: 'blur(8px)',
       }}
     >
       {toast.message}

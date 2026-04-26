@@ -1,0 +1,53 @@
+.backBtn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: var(--text-sm);
+  padding: 0;
+  margin-bottom: 20px;
+  display: inline-block;
+  transition: color var(--duration-fast);
+}
+.backBtn:hover { color: var(--text); }
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* Auto-send toggle button */
+.autoSendBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  padding: 6px 0;
+  transition: opacity var(--duration-fast);
+}
+.autoSendBtn span {
+  font-size: var(--text-xs);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.togglePill {
+  width: 36px;
+  height: 20px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  position: relative;
+  transition: background var(--duration-normal);
+}
+
+.toggleDot {
+  position: absolute;
+  top: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  transition: left var(--duration-normal);
+}

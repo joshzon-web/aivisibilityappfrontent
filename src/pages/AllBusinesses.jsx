@@ -3,14 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { listBusinesses, deleteBusiness, listClients, assignBusinessToClient } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
+import { useConfirm } from '../components/ConfirmModal';
+import Sidebar from '../components/Sidebar';
 import NewScan from '../components/NewScan';
-import BrandLogo from '../components/BrandLogo';
 import EmptyState from '../components/EmptyState';
+import TrialBanner from '../components/TrialBanner';
 import styles from './Dashboard.module.css';
 
 export default function AllBusinesses() {
-  const { user, logoutUser } = useAuth();
+  const { user } = useAuth();
   const { showToast } = useToast();
+  const { confirm } = useConfirm();
   const navigate = useNavigate();
 
   const [businesses, setBusinesses] = useState([]);
@@ -24,9 +27,7 @@ export default function AllBusinesses() {
   const [openMenuId, setOpenMenuId] = useState(null);
   const menuRef = useRef(null);
 
-  const userId = user?.id;
-  useEffect(() => {
-    if (!userId) return;
+  const loadData = () => {
     setLoading(true);
     setLoadError(false);
     Promise.all([listBusinesses(), listClients()])
@@ -36,7 +37,10 @@ export default function AllBusinesses() {
       })
       .catch(() => setLoadError(true))
       .finally(() => setLoading(false));
-  }, [userId]);
+  };
+
+  const userId = user?.id;
+  useEffect(() => { if (userId) loadData(); }, [userId]); // eslint-disable-line
 
   useEffect(() => {
     if (!openMenuId) return;
@@ -47,11 +51,22 @@ export default function AllBusinesses() {
     return () => document.removeEventListener('mousedown', handler);
   }, [openMenuId]);
 
-  const handleDelete = async (id, e) => {
+  const handleDelete = async (biz, e) => {
     e.stopPropagation();
-    if (!window.confirm('Remove this business from tracking?')) return;
-    await deleteBusiness(id);
-    setBusinesses(prev => prev.filter(b => b.id !== id));
+    const ok = await confirm({
+      title: `Remove "${biz.name}"?`,
+      message: 'This business and all its scans will be permanently removed. This cannot be undone.',
+      confirmLabel: 'Remove',
+      danger: true,
+    });
+    if (!ok) return;
+    try {
+      await deleteBusiness(biz.id);
+      setBusinesses(prev => prev.filter(b => b.id !== biz.id));
+      showToast(`"${biz.name}" removed`, 'success');
+    } catch {
+      showToast('Could not remove business', 'error');
+    }
   };
 
   const handleScanComplete = (scanId) => navigate(`/scan/${scanId}`);
@@ -137,206 +152,186 @@ export default function AllBusinesses() {
 
   return (
     <div className={styles.layout}>
-      <aside className={styles.sidebar}>
-        <div className={styles.logo}><BrandLogo height={28} /></div>
-        <nav className={styles.nav}>
-          <button className={styles.navItem} onClick={() => navigate('/dashboard')}>▦ Clients</button>
-          <button className={styles.navItem + ' ' + styles.active}>≡ All businesses</button>
-          <button className={styles.navItem} onClick={() => navigate('/prospecting')}>◈ Prospecting</button>
-          <button className={styles.navItem} onClick={() => navigate('/settings')}>◈ White-label</button>
-        </nav>
-        <div className={styles.sidebarFooter}>
-          <div className={styles.userInfo}>
-            <div className={styles.userDot} />
-            <span>{user?.email}</span>
-          </div>
-          <button className={styles.logoutBtn} onClick={logoutUser}>Sign out</button>
-        </div>
-      </aside>
+      <Sidebar active="all-businesses" />
 
-      <main className={styles.main}>
-        {showNewScan ? (
-          <NewScan onComplete={handleScanComplete} onCancel={() => setShowNewScan(false)} />
-        ) : (
-          <>
-            <div className={styles.header + ' fade-up'}>
-              <div>
-                <h1 className={styles.title}>All businesses</h1>
-                <p className={styles.sub}>{businesses.length} business{businesses.length !== 1 ? 'es' : ''} tracked</p>
-              </div>
-              <button className={styles.newBtn} onClick={() => setShowNewScan(true)}>+ Track new business</button>
-            </div>
-
-            {loading ? (
-              <div className={styles.loading}><div className={styles.spinner} /><span>Loading...</span></div>
-            ) : loadError ? (
-              <EmptyState icon="⚠" title="Couldn't load businesses"
-                subtitle="Check your connection and try again."
-                action={{ label: 'Try again', onClick: () => { setLoadError(false); setLoading(true); Promise.all([listBusinesses(), listClients()]).then(([bizRes, clientRes]) => { setBusinesses(bizRes.data.businesses); setClients(clientRes.data.clients); }).catch(() => setLoadError(true)).finally(() => setLoading(false)); } }} />
-            ) : businesses.length === 0 ? (
-              <EmptyState icon="◈" title="No businesses tracked yet"
-                subtitle="Go to a client and track their first business."
-                action={{ label: '← Back to clients', onClick: () => navigate('/dashboard') }} />
-            ) : (
-              <>
-                <div className={styles.toolbar + ' fade-up-1'}>
-                  <div className={styles.searchWrap}>
-                    <span className={styles.searchIcon}>⌕</span>
-                    <input className={styles.searchInput} placeholder="Search businesses..."
-                      value={search} onChange={e => setSearch(e.target.value)} />
-                    {search && <button className={styles.searchClear} onClick={() => setSearch('')}>✕</button>}
-                  </div>
-                  <div className={styles.filterPills}>
-                    {[
-                      { value: 'all', label: 'All' },
-                      { value: 'strong', label: '● Strong' },
-                      { value: 'moderate', label: '● Moderate' },
-                      { value: 'weak', label: '● Weak' },
-                    ].map(f => (
-                      <button key={f.value}
-                        className={styles.filterPill + (filter === f.value ? ' ' + styles.filterPillActive : '')}
-                        style={filter === f.value && f.value !== 'all' ? {
-                          borderColor: f.value === 'strong' ? 'var(--accent2)' : f.value === 'moderate' ? 'var(--orange)' : 'var(--red)',
-                          color: f.value === 'strong' ? 'var(--accent2)' : f.value === 'moderate' ? 'var(--orange)' : 'var(--red)',
-                        } : {}}
-                        onClick={() => setFilter(f.value)}
-                      >{f.label}</button>
-                    ))}
-                  </div>
-                  <select className={styles.sortSelect} value={sort} onChange={e => setSort(e.target.value)}>
-                    <option value="score">Sort: Latest score</option>
-                    <option value="delta">Sort: Score change</option>
-                    <option value="date">Sort: Last scanned</option>
-                    <option value="name">Sort: Name A–Z</option>
-                  </select>
+      <main className={styles.main} style={{ padding: 0 }}>
+        <TrialBanner />
+        <div className={styles.mainPad}>
+          {showNewScan ? (
+            <NewScan onComplete={handleScanComplete} onCancel={() => setShowNewScan(false)} />
+          ) : (
+            <>
+              <div className={styles.header + ' fade-up'}>
+                <div>
+                  <h1 className={styles.title}>All businesses</h1>
+                  <p className={styles.sub}>{businesses.length} business{businesses.length !== 1 ? 'es' : ''} tracked</p>
                 </div>
+                <button className={styles.newBtn} onClick={() => setShowNewScan(true)}>+ Track new business</button>
+              </div>
 
-                {filtered.length === 0 ? (
-                  <EmptyState icon="🔍" title="No businesses match"
-                    action={{ label: 'Clear filters', onClick: () => { setSearch(''); setFilter('all'); } }} />
-                ) : (
-                  <div className={styles.grid}>
-                    {filtered.map((biz, i) => {
-                      const latest = biz.latest_scan;
-                      const score = latest?.ai_visibility_score;
-                      const delta = getDelta(biz);
-                      const oldComp = isOldComparison(biz);
-                      const assignedClientName = clients.find(c => c.id === biz.client_id)?.name;
-                      return (
-                        <div key={biz.id}
-                          className={styles.card + ` fade-up-${Math.min(i + 1, 4)}`}
-                          onClick={() => navigate(`/business/${biz.id}`)}
-                        >
-                          <div className={styles.cardTop}>
-                            <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                              <div className={styles.score} style={{ color: scoreColour(score) }}>
-                                {score ?? '—'}
-                                {score != null && <span className={styles.scoreMax}>/100</span>}
-                              </div>
-                              {delta !== null && (
-                                <span style={{
-                                  fontSize: '0.75rem', fontFamily: "'DM Mono', monospace", fontWeight: 600,
-                                  color: delta > 0 ? 'var(--accent2)' : delta < 0 ? 'var(--red)' : 'var(--muted)',
-                                }}>
-                                  {delta > 0 ? '+' : ''}{delta}
-                                </span>
-                              )}
-                            </div>
-                            <div className={styles.cardActions} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              <span className={styles.scanBadge} style={{ color: scoreColour(score) }}>{scoreLabel(score)}</span>
-                              {/* ⋯ assign-to-client */}
-                              <div style={{ position: 'relative' }} ref={openMenuId === biz.id ? menuRef : null}>
-                                <button className={styles.deleteBtn} title="Move to client"
-                                  onClick={e => { e.stopPropagation(); setOpenMenuId(prev => prev === biz.id ? null : biz.id); }}
-                                  style={{ fontSize: '1rem' }}>⋯</button>
-                                {openMenuId === biz.id && (
-                                  <div onClick={e => e.stopPropagation()} style={{
-                                    position: 'absolute', right: 0, top: '100%', zIndex: 100,
-                                    background: '#0f1923', border: '1px solid var(--border)',
-                                    borderRadius: '8px', boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
-                                    minWidth: '180px', overflow: 'hidden',
+              {loading ? (
+                <div className={styles.skeletonGrid}>
+                  {[1, 2, 3].map(i => <div key={i} className={styles.skeletonCard} />)}
+                </div>
+              ) : loadError ? (
+                <EmptyState icon="⚠" title="Couldn't load businesses"
+                  subtitle="Check your connection and try again."
+                  action={{ label: 'Try again', onClick: loadData }} />
+              ) : businesses.length === 0 ? (
+                <EmptyState icon="◈" title="No businesses tracked yet"
+                  subtitle="Go to a client and track their first business."
+                  action={{ label: '← Back to clients', onClick: () => navigate('/dashboard') }} />
+              ) : (
+                <>
+                  <div className={styles.toolbar + ' fade-up-1'}>
+                    <div className={styles.searchWrap}>
+                      <span className={styles.searchIcon}>⌕</span>
+                      <input className={styles.searchInput} placeholder="Search businesses..."
+                        value={search} onChange={e => setSearch(e.target.value)} />
+                      {search && <button className={styles.searchClear} onClick={() => setSearch('')}>✕</button>}
+                    </div>
+                    <div className={styles.filterPills}>
+                      {[
+                        { value: 'all', label: 'All' },
+                        { value: 'strong', label: '● Strong' },
+                        { value: 'moderate', label: '● Moderate' },
+                        { value: 'weak', label: '● Weak' },
+                      ].map(f => (
+                        <button key={f.value}
+                          className={styles.filterPill + (filter === f.value ? ' ' + styles.filterPillActive : '')}
+                          style={filter === f.value && f.value !== 'all' ? {
+                            borderColor: f.value === 'strong' ? 'var(--accent2)' : f.value === 'moderate' ? 'var(--orange)' : 'var(--red)',
+                            color: f.value === 'strong' ? 'var(--accent2)' : f.value === 'moderate' ? 'var(--orange)' : 'var(--red)',
+                          } : {}}
+                          onClick={() => setFilter(f.value)}
+                        >{f.label}</button>
+                      ))}
+                    </div>
+                    <select className={styles.sortSelect} value={sort} onChange={e => setSort(e.target.value)}>
+                      <option value="score">Sort: Latest score</option>
+                      <option value="delta">Sort: Score change</option>
+                      <option value="date">Sort: Last scanned</option>
+                      <option value="name">Sort: Name A–Z</option>
+                    </select>
+                  </div>
+
+                  {filtered.length === 0 ? (
+                    <EmptyState icon="🔍" title="No businesses match"
+                      action={{ label: 'Clear filters', onClick: () => { setSearch(''); setFilter('all'); } }} />
+                  ) : (
+                    <div className={styles.grid}>
+                      {filtered.map((biz, i) => {
+                        const latest = biz.latest_scan;
+                        const score = latest?.ai_visibility_score;
+                        const delta = getDelta(biz);
+                        const oldComp = isOldComparison(biz);
+                        const assignedClientName = clients.find(c => c.id === biz.client_id)?.name;
+                        return (
+                          <div key={biz.id}
+                            className={styles.card + ` fade-up-${Math.min(i + 1, 4)}`}
+                            onClick={() => navigate(`/business/${biz.id}`)}
+                          >
+                            <div className={styles.cardTop}>
+                              <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                                <div className={styles.score} style={{ color: scoreColour(score) }}>
+                                  {score ?? '—'}
+                                  {score != null && <span className={styles.scoreMax}>/100</span>}
+                                </div>
+                                {delta !== null && (
+                                  <span style={{
+                                    fontSize: '0.75rem', fontFamily: "'DM Mono', monospace", fontWeight: 600,
+                                    color: delta > 0 ? 'var(--accent2)' : delta < 0 ? 'var(--red)' : 'var(--muted)',
                                   }}>
-                                    <div style={{ padding: '8px 12px 4px', fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                      Move to client
-                                    </div>
-                                    {clients.length === 0 && (
-                                      <div style={{ padding: '8px 12px', fontSize: '0.8rem', color: 'var(--muted)' }}>No clients yet</div>
-                                    )}
-                                    {clients.map(c => (
-                                      <button key={c.id} onClick={e => handleAssignClient(biz.id, c.id, e)} style={{
-                                        display: 'block', width: '100%', padding: '7px 12px', textAlign: 'left',
-                                        background: biz.client_id === c.id ? 'rgba(56,189,248,0.08)' : 'transparent',
-                                        border: 'none', fontSize: '0.83rem', color: 'var(--text)', cursor: 'pointer',
-                                      }}>
-                                        {biz.client_id === c.id ? '✓ ' : ''}{c.name}
-                                      </button>
-                                    ))}
-                                    {biz.client_id && (
-                                      <button onClick={e => handleAssignClient(biz.id, null, e)} style={{
-                                        display: 'block', width: '100%', padding: '7px 12px', textAlign: 'left',
-                                        background: 'transparent', border: 'none', borderTop: '1px solid var(--border)',
-                                        fontSize: '0.83rem', color: 'var(--red)', cursor: 'pointer',
-                                      }}>
-                                        Remove from client
-                                      </button>
-                                    )}
-                                  </div>
+                                    {delta > 0 ? '+' : ''}{delta}
+                                  </span>
                                 )}
                               </div>
-                              <button className={styles.deleteBtn} onClick={e => handleDelete(biz.id, e)} title="Remove">✕</button>
+                              <div className={styles.cardActions} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <span className={styles.scanBadge} style={{ color: scoreColour(score) }}>{scoreLabel(score)}</span>
+                                {/* ⋯ assign-to-client menu */}
+                                <div style={{ position: 'relative' }} ref={openMenuId === biz.id ? menuRef : null}>
+                                  <button className={styles.deleteBtn} title="Move to client"
+                                    onClick={e => { e.stopPropagation(); setOpenMenuId(prev => prev === biz.id ? null : biz.id); }}
+                                    style={{ fontSize: '1rem' }}>⋯</button>
+                                  {openMenuId === biz.id && (
+                                    <div onClick={e => e.stopPropagation()} className={styles.menu}>
+                                      <div style={{ padding: '8px 12px 4px', fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                        Move to client
+                                      </div>
+                                      {clients.length === 0 && (
+                                        <div style={{ padding: '8px 12px', fontSize: '0.8rem', color: 'var(--muted)' }}>No clients yet</div>
+                                      )}
+                                      {clients.map(c => (
+                                        <button key={c.id} onClick={e => handleAssignClient(biz.id, c.id, e)}
+                                          className={styles.menuItem}
+                                          style={biz.client_id === c.id ? { color: 'var(--accent)' } : {}}>
+                                          {biz.client_id === c.id ? '✓ ' : ''}{c.name}
+                                        </button>
+                                      ))}
+                                      {biz.client_id && (
+                                        <button onClick={e => handleAssignClient(biz.id, null, e)}
+                                          className={`${styles.menuItem} ${styles.menuItemDanger}`}
+                                          style={{ borderTop: '1px solid var(--border)' }}>
+                                          Remove from client
+                                        </button>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                                <button className={styles.deleteBtn} onClick={e => handleDelete(biz, e)} title="Remove">✕</button>
+                              </div>
                             </div>
-                          </div>
 
-                          <div className={styles.businessName}>{biz.name}</div>
-                          <div className={styles.searchTerm}>"{biz.search_term}"</div>
-                          {biz.search_label && (
-                            <div className={styles.location} style={{ color: 'var(--accent)', opacity: 0.85 }}>
-                              Tracking in: {biz.search_label}{biz.search_label_source === 'user_override' ? ' •' : ''}
-                            </div>
-                          )}
-                          {biz.address && <div className={styles.location}>{biz.address}</div>}
-
-                          {/* Client badge */}
-                          {assignedClientName && (
-                            <div style={{
-                              display: 'inline-block', marginTop: '4px', padding: '2px 7px',
-                              borderRadius: '4px', background: 'rgba(55,138,221,0.12)', color: '#378add',
-                              fontSize: '0.72rem', fontWeight: 600,
-                            }}>
-                              📁 {assignedClientName}
-                            </div>
-                          )}
-
-                          {latest && (
-                            <div className={styles.enginePills}>
-                              <span className={styles.enginePill} style={{ color: 'var(--accent)' }}>GPT {latest.chatgpt_score ?? '—'}%</span>
-                              <span className={styles.enginePill} style={{ color: '#a78bfa' }}>Gem {latest.gemini_score ?? '—'}%</span>
-                              <span className={styles.enginePill} style={{ color: '#34d399' }}>Plx {latest.perplexity_score ?? '—'}%</span>
-                            </div>
-                          )}
-
-                          <div className={styles.cardFooter}>
-                            <span className={styles.scanCount}>{biz.scan_count} scan{biz.scan_count !== 1 ? 's' : ''}</span>
-                            {latest ? (
-                              <span className={styles.date}>
-                                {delta !== null
-                                  ? <span style={{ color: 'var(--muted)', fontSize: '0.72rem' }}>vs {oldComp ? 'first scan' : 'last month'}</span>
-                                  : new Date(latest.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
-                                }
-                              </span>
-                            ) : (
-                              <span className={styles.viewLink}>Scan now →</span>
+                            <div className={styles.businessName}>{biz.name}</div>
+                            <div className={styles.searchTerm}>"{biz.search_term}"</div>
+                            {biz.search_label && (
+                              <div className={styles.location} style={{ color: 'var(--accent)', opacity: 0.85 }}>
+                                Tracking in: {biz.search_label}{biz.search_label_source === 'user_override' ? ' •' : ''}
+                              </div>
                             )}
+                            {biz.address && <div className={styles.location}>{biz.address}</div>}
+
+                            {assignedClientName && (
+                              <div style={{
+                                display: 'inline-block', marginTop: '4px', padding: '2px 7px',
+                                borderRadius: '4px', background: 'rgba(55,138,221,0.12)', color: '#378add',
+                                fontSize: '0.72rem', fontWeight: 600,
+                              }}>
+                                📁 {assignedClientName}
+                              </div>
+                            )}
+
+                            {latest && (
+                              <div className={styles.enginePills}>
+                                <span className={styles.enginePill} style={{ color: 'var(--accent)' }}>GPT {latest.chatgpt_score ?? '—'}%</span>
+                                <span className={styles.enginePill} style={{ color: '#a78bfa' }}>Gem {latest.gemini_score ?? '—'}%</span>
+                                <span className={styles.enginePill} style={{ color: '#34d399' }}>Plx {latest.perplexity_score ?? '—'}%</span>
+                              </div>
+                            )}
+
+                            <div className={styles.cardFooter}>
+                              <span className={styles.scanCount}>{biz.scan_count} scan{biz.scan_count !== 1 ? 's' : ''}</span>
+                              {latest ? (
+                                <span className={styles.date}>
+                                  {delta !== null
+                                    ? <span style={{ color: 'var(--muted)', fontSize: '0.72rem' }}>vs {oldComp ? 'first scan' : 'last month'}</span>
+                                    : new Date(latest.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+                                  }
+                                </span>
+                              ) : (
+                                <span className={styles.viewLink}>Scan now →</span>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </>
-            )}
-          </>
-        )}
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              )}
+            </>
+          )}
+        </div>
       </main>
     </div>
   );
