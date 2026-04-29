@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { SCAN_STATUSES } from '../constants/scanStatuses';
 import { getBusinessScans, getBusiness, runScan, updateBusinessSchedule, deleteScan, getBusinessTerms, updateBusinessSearchLabel } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../components/ConfirmModal';
@@ -17,6 +19,7 @@ export default function Business() {
   const [business, setBusiness] = useState(null);
   const [loading, setLoading] = useState(true);
   const [scanning, setScanning] = useState(false);
+  const [scanStatus, setScanStatus] = useState('');
   const [error, setError] = useState(null);
   const [scheduleUpdating, setScheduleUpdating] = useState(false);
 
@@ -80,6 +83,12 @@ export default function Business() {
     if (!business) return;
     setScanning(true);
     setError(null);
+    setScanStatus(SCAN_STATUSES[0]);
+    let idx = 0;
+    const interval = setInterval(() => {
+      idx = (idx + 1) % SCAN_STATUSES.length;
+      setScanStatus(SCAN_STATUSES[idx]);
+    }, 8000);
     try {
       const term = activeTerm || business.search_term;
       const res = await runScan(business.place_id, term, { force_refresh: true });
@@ -87,6 +96,7 @@ export default function Business() {
     } catch (e) {
       setError('Scan failed. Please try again.');
     } finally {
+      clearInterval(interval);
       setScanning(false);
     }
   };
@@ -652,6 +662,18 @@ export default function Business() {
             </div>
           </div>
         </div>
+      )}
+
+      {scanning && createPortal(
+        <div className={styles.scanOverlay}>
+          <div className={styles.scanCard}>
+            <div className={styles.scanSpinnerLg} />
+            <h2 className={styles.scanTitle}>Scanning AI engines</h2>
+            <p className={styles.scanStatusText}>{scanStatus}</p>
+            <p className={styles.scanSub}>This takes 60–90 seconds. Don't close this tab.</p>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

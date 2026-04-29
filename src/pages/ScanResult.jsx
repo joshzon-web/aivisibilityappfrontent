@@ -29,7 +29,7 @@ function buildRecommendations(result, ownMentions, totalPrompts, categoryMap) {
   // 1 · Engine completely absent (high per engine)
   if (chatgptPct === 0 && totalPrompts > 0) {
     recs.push({
-      priority: 'high', icon: '⚠',
+      priority: 'high',
       title: 'Invisible to ChatGPT (0%)',
       detail: 'ChatGPT didn\'t mention you in any prompt. It relies on web content — ensure you\'re listed on directories, review sites, and your Google Business Profile is complete.',
       category: 'AI Presence',
@@ -37,7 +37,7 @@ function buildRecommendations(result, ownMentions, totalPrompts, categoryMap) {
   }
   if (geminiPct === 0 && totalPrompts > 0) {
     recs.push({
-      priority: 'high', icon: '⚠',
+      priority: 'high',
       title: 'Invisible to Gemini (0%)',
       detail: 'Gemini pulls directly from Google\'s index. A 0% Gemini score strongly suggests your Google Business Profile needs attention — add photos, respond to reviews, verify your category.',
       category: 'AI Presence',
@@ -45,7 +45,7 @@ function buildRecommendations(result, ownMentions, totalPrompts, categoryMap) {
   }
   if (perplexPct === 0 && totalPrompts > 0) {
     recs.push({
-      priority: 'high', icon: '⚠',
+      priority: 'high',
       title: 'Invisible to Perplexity (0%)',
       detail: 'Perplexity uses web search. A 0% score suggests limited online presence — build citations on Yelp, TripAdvisor, and local directories.',
       category: 'AI Presence',
@@ -55,7 +55,7 @@ function buildRecommendations(result, ownMentions, totalPrompts, categoryMap) {
   // 2 · Rating below competitor average (high)
   if (rating && avgRating && rating < avgRating) {
     recs.push({
-      priority: 'high', icon: '⭐',
+      priority: 'high',
       title: `Rating below local average (${rating}★ vs ${avgRating}★ avg)`,
       detail: `Competitors in your area average ${avgRating}★. AI engines treat star rating as a primary trust signal — closing this gap should be your top priority.`,
       category: 'Reviews',
@@ -65,7 +65,7 @@ function buildRecommendations(result, ownMentions, totalPrompts, categoryMap) {
   // 3 · Mentioned but rarely recommended (medium)
   if (mentionTotal > 3 && recTotal < mentionTotal * 0.4) {
     recs.push({
-      priority: 'medium', icon: '📌',
+      priority: 'medium',
       title: 'Mentioned but rarely recommended',
       detail: `You appear in AI responses (${mentionTotal} mentions) but are in the recommended list only ${recTotal} time${recTotal !== 1 ? 's' : ''}. Businesses that rank in "top 3" lists need stronger review signals and consistent name/address/phone data across the web.`,
       category: 'AI Presence',
@@ -86,7 +86,7 @@ function buildRecommendations(result, ownMentions, totalPrompts, categoryMap) {
     .slice(0, 2);
   weakCats.forEach(([cat, d]) => {
     recs.push({
-      priority: 'medium', icon: '📊',
+      priority: 'medium',
       title: `Low visibility in "${catLabels[cat] || cat}" queries`,
       detail: `Only ${d.mentioned}/${d.total} "${cat.replace(/_/g, ' ')}" prompts mentioned you. ${catTips[cat] || ''}`,
       category: 'Visibility',
@@ -96,7 +96,7 @@ function buildRecommendations(result, ownMentions, totalPrompts, categoryMap) {
   // 5 · Review volume well below competitors (medium)
   if (reviews < avgReviews * 0.5 && avgReviews > 10) {
     recs.push({
-      priority: 'medium', icon: '💬',
+      priority: 'medium',
       title: 'Review volume well below competitors',
       detail: `Competitors average ${avgReviews} reviews; you have ${reviews}. Volume signals popularity to AI engines — set up an automated review request for every new customer.`,
       category: 'Reviews',
@@ -108,7 +108,7 @@ function buildRecommendations(result, ownMentions, totalPrompts, categoryMap) {
     const top = visMap[0];
     if (top.name !== result.name && top.mentions > ownMentions * 2 && top.mentions > 2) {
       recs.push({
-        priority: 'medium', icon: '🏆',
+        priority: 'medium',
         title: `"${top.name}" is dominating AI results`,
         detail: `${top.name} is mentioned ${top.mentions}× vs your ${ownMentions} across all prompts. Study their Google Business Profile, review strategy, and online presence.`,
         category: 'Competitors',
@@ -119,7 +119,7 @@ function buildRecommendations(result, ownMentions, totalPrompts, categoryMap) {
   // 7 · Google Maps rank low (low)
   if (result.target_position && result.target_position > 3) {
     recs.push({
-      priority: 'low', icon: '📍',
+      priority: 'low',
       title: `Ranked #${result.target_position} locally on Google Maps`,
       detail: 'Local Google Maps ranking directly influences which businesses AI engines recommend. Improving review recency, keeping hours accurate, and adding photos all help.',
       category: 'Local SEO',
@@ -130,7 +130,7 @@ function buildRecommendations(result, ownMentions, totalPrompts, categoryMap) {
   const near = milestones.find(m => m.needed > 0 && m.needed <= 25);
   if (near) {
     recs.push({
-      priority: 'low', icon: '🎯',
+      priority: 'low',
       title: `Just ${near.needed} reviews away from ${near.target}★`,
       detail: `You're ${near.needed} five-star reviews away from hitting ${near.target}★ — a quick win. Send a review request to your happiest recent customers today.`,
       category: 'Reviews',
@@ -142,7 +142,7 @@ function buildRecommendations(result, ownMentions, totalPrompts, categoryMap) {
     const top3 = result.top_sources.slice(0, 3)
       .map(s => `${s.domain} (${s.count}×)`).join(', ');
     recs.push({
-      priority: 'medium', icon: '🔗',
+      priority: 'medium',
       title: 'Top sources AI cites in your space',
       detail: `When AI engines respond to "${result.search_term}" queries, they most often cite: ${top3}. Strengthen your presence on these specific sites — claim listings, encourage reviews, build content there.`,
       category: 'Sources',
@@ -1018,7 +1018,6 @@ const perplexityTotal = perplexityChecks.length;
                       gap: '14px',
                       alignItems: 'flex-start',
                     }}>
-                      <span style={{ fontSize: '1.3rem', lineHeight: '1.2', flexShrink: 0 }}>{rec.icon}</span>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '6px' }}>
                           <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text)' }}>{rec.title}</span>
