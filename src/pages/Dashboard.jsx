@@ -6,7 +6,8 @@ import { useToast } from '../components/Toast';
 import { useConfirm } from '../components/ConfirmModal';
 import Sidebar from '../components/Sidebar';
 import EmptyState from '../components/EmptyState';
-import TrialBanner from '../components/TrialBanner';
+import TrialBanner, { useBillingStatus } from '../components/TrialBanner';
+import WelcomeModal from '../components/WelcomeModal';
 import styles from './Dashboard.module.css';
 
 // Deterministic avatar colour from client name
@@ -20,6 +21,7 @@ export default function Dashboard() {
   const { user } = useAuth();
   const { showToast } = useToast();
   const { confirm } = useConfirm();
+  const { status: billingStatus } = useBillingStatus();
   const navigate = useNavigate();
 
   const [clients, setClients] = useState([]);
@@ -30,6 +32,7 @@ export default function Dashboard() {
   const [showNew, setShowNew] = useState(false);
   const [newForm, setNewForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
 
   const [search, setSearch] = useState('');
   const [openMenuId, setOpenMenuId] = useState(null);
@@ -51,6 +54,15 @@ export default function Dashboard() {
 
   const userId = user?.id;
   useEffect(() => { if (userId) loadData(); }, [userId]); // eslint-disable-line
+
+  // Show welcome modal once — only if the user has no clients yet (avoids
+  // showing it to someone logging in on a new device who already has data).
+  useEffect(() => {
+    if (!localStorage.getItem('welcome_seen') && clients.length === 0) {
+      const t = setTimeout(() => setShowWelcome(true), 600);
+      return () => clearTimeout(t);
+    }
+  }, [clients.length]); // re-evaluate once clients have loaded
 
   useEffect(() => {
     if (!openMenuId) return;
@@ -161,10 +173,45 @@ export default function Dashboard() {
   return (
     <div className={styles.layout}>
       <Sidebar active="dashboard" />
+      {showWelcome && (
+        <WelcomeModal
+          onGetStarted={() => { setShowWelcome(false); setShowNew(true); }}
+          onDismiss={() => setShowWelcome(false)}
+        />
+      )}
 
       <main className={styles.main} style={{ padding: 0 }}>
         <TrialBanner />
         <div className={styles.mainPad}>
+
+          {/* In-content expired trial notice — non-dismissible, stays above the grid */}
+          {billingStatus?.is_trial_expired && billingStatus?.plan === 'trial' && (
+            <div style={{
+              background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)',
+              borderRadius: 12, padding: '20px 24px', marginBottom: 28,
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              gap: 16, flexWrap: 'wrap',
+            }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--red)', marginBottom: 4 }}>
+                  Your free trial has ended
+                </div>
+                <div style={{ fontSize: '0.82rem', color: 'var(--muted)', lineHeight: 1.5 }}>
+                  Subscribe to continue running scans and tracking new businesses. Your data is safe and waiting.
+                </div>
+              </div>
+              <button
+                onClick={() => navigate('/settings?tab=billing')}
+                style={{
+                  padding: '10px 22px', borderRadius: 8, fontSize: '0.85rem', fontWeight: 700,
+                  background: 'var(--red)', color: '#fff', border: 'none', cursor: 'pointer',
+                  whiteSpace: 'nowrap', flexShrink: 0,
+                }}
+              >
+                View plans →
+              </button>
+            </div>
+          )}
 
           <div className={styles.header + ' fade-up'}>
             <div>

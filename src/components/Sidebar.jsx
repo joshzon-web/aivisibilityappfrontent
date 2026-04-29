@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
 import BrandLogo from './BrandLogo';
 import { SidebarQuota } from './TrialBanner';
 import styles from './Sidebar.module.css';
@@ -17,7 +16,6 @@ import styles from './Sidebar.module.css';
  */
 export default function Sidebar({ active, extra = [] }) {
   const { user, logoutUser } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   const navCls = (key) =>
@@ -62,12 +60,21 @@ export default function Sidebar({ active, extra = [] }) {
         </div>
         <button
           className={styles.themeToggle}
-          onClick={() => window.$crisp?.push(['do', 'chat:open'])}
+          onClick={() => navigate('/help')}
         >
           Help & support
         </button>
-        <button className={styles.themeToggle} onClick={toggleTheme}>
-          {theme === 'dark' ? '☀ Light mode' : '◑ Dark mode'}
+        <button
+          className={styles.themeToggle}
+          onClick={() => window.$crisp?.push(['do', 'chat:open'])}
+        >
+          Live chat
+        </button>
+        <button
+          className={styles.themeToggle}
+          onClick={() => navigate('/settings?tab=account')}
+        >
+          Settings
         </button>
         <button className={styles.logoutBtn} onClick={logoutUser}>
           Sign out

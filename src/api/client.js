@@ -128,6 +128,13 @@ export const deleteClient = (id) => api.delete(`/clients/${id}`);
 export const assignBusinessToClient = (bizId, clientId) =>
   api.post(`/businesses/${bizId}/assign-client`, { client_id: clientId });
 
+// Account
+export const updateProfile          = (fields) => api.patch('/me/profile', fields);
+export const changePassword         = (current_password, new_password) =>
+  api.patch('/me/password', { current_password, new_password });
+export const getNotificationPrefs   = () => api.get('/me/notifications');
+export const updateNotificationPrefs = (fields) => api.patch('/me/notifications', fields);
+
 // Billing
 export const getBillingStatus    = ()     => api.get('/billing/status');
 export const createCheckout      = (plan) => api.post('/billing/checkout', { plan });

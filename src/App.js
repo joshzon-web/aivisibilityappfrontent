@@ -14,6 +14,9 @@ import Business from './pages/Business';
 import Prospecting from './pages/Prospecting';
 import Settings from './pages/Settings';
 import Pricing from './pages/Pricing';
+import Terms from './pages/Terms';
+import Privacy from './pages/Privacy';
+import Help from './pages/Help';
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -59,6 +62,9 @@ export default function App() {
               <Route path="/prospecting" element={<PrivateRoute><Prospecting /></PrivateRoute>} />
               <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
               <Route path="/pricing" element={<Pricing />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/help" element={<PrivateRoute><Help /></PrivateRoute>} />
               <Route path="/share/scan/:token" element={<ScanResult publicMode={true} />} />
               <Route path="*" element={<Navigate to="/auth" replace />} />
             </Routes>

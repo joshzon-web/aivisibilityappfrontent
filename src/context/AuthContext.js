@@ -105,8 +105,17 @@ export function AuthProvider({ children }) {
 
   const refreshBrand = fetchBrand;
 
+  /** Merge `fields` into the cached user object (localStorage + state). */
+  const updateUser = (fields) => {
+    setUser((prev) => {
+      const next = { ...prev, ...fields };
+      localStorage.setItem('user', JSON.stringify(next));
+      return next;
+    });
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, loginUser, logoutUser, brand, refreshBrand }}>
+    <AuthContext.Provider value={{ user, loading, loginUser, logoutUser, brand, refreshBrand, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

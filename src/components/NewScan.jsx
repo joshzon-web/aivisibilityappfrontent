@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { searchBusinesses, runScan, probeBusinessLabel } from '../api/client';
+import { useBillingStatus } from './TrialBanner';
 import styles from './NewScan.module.css';
 import { SCAN_STATUSES } from '../constants/scanStatuses';
 
@@ -8,6 +9,7 @@ const STEPS = ['Search', 'Select', 'Scan'];
 
 export default function NewScan({ onComplete, onCancel, clientId = null }) {
   const navigate = useNavigate();
+  const { status: billingStatus } = useBillingStatus();
   const [step, setStep] = useState(0);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
@@ -246,6 +248,45 @@ export default function NewScan({ onComplete, onCancel, clientId = null }) {
                     </>
                   )}
                 </div>
+                {/* Quota warning — show when ≤3 scans remaining, block at 0 */}
+                {(() => {
+                  const limit = billingStatus?.scans_limit;
+                  const used  = billingStatus?.scans_used ?? 0;
+                  if (limit === null || limit === undefined) return null; // unlimited plan
+                  const remaining = Math.max(0, limit - used);
+                  if (remaining > 3) return null;
+                  if (remaining === 0) {
+                    return (
+                      <div style={{
+                        background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)',
+                        borderRadius: 8, padding: '12px 16px', fontSize: '0.83rem', color: 'var(--red)',
+                        marginBottom: 4,
+                      }}>
+                        <div style={{ marginBottom: 8 }}>You have no scans remaining this period.</div>
+                        <button
+                          type="button"
+                          onClick={() => navigate('/settings?tab=billing')}
+                          style={{
+                            padding: '6px 16px', borderRadius: 6, fontSize: '0.8rem', fontWeight: 700,
+                            background: 'var(--red)', color: '#fff', border: 'none', cursor: 'pointer',
+                          }}
+                        >
+                          View plans →
+                        </button>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div style={{
+                      background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.3)',
+                      borderRadius: 8, padding: '10px 14px', fontSize: '0.8rem', color: '#f59e0b',
+                      marginBottom: 4,
+                    }}>
+                      ⚠ {remaining} scan{remaining !== 1 ? 's' : ''} remaining this period
+                    </div>
+                  );
+                })()}
+
                 {error && error.startsWith('__quota__:') ? (
                   <div style={{
                     background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)',
@@ -266,10 +307,26 @@ export default function NewScan({ onComplete, onCancel, clientId = null }) {
                 ) : error ? (
                   <div className={styles.error}>{error}</div>
                 ) : null}
-                <div className={styles.btnRow}>
-                  <button type="button" className={styles.cancelBtn} onClick={() => setStep(1)}>← Back</button>
-                  <button type="submit" className={styles.btn}>Start scan →</button>
-                </div>
+                {(() => {
+                  const limit = billingStatus?.scans_limit;
+                  const used  = billingStatus?.scans_used ?? 0;
+                  const remaining = limit !== null && limit !== undefined ? Math.max(0, limit - used) : null;
+                  const outOfScans = remaining !== null && remaining === 0;
+                  return (
+                    <div className={styles.btnRow}>
+                      <button type="button" className={styles.cancelBtn} onClick={() => setStep(1)}>← Back</button>
+                      <button
+                        type="submit"
+                        className={styles.btn}
+                        disabled={outOfScans}
+                        style={outOfScans ? { opacity: 0.4, cursor: 'not-allowed' } : {}}
+                        title={outOfScans ? 'No scans remaining — upgrade your plan' : undefined}
+                      >
+                        Start scan →
+                      </button>
+                    </div>
+                  );
+                })()}
               </form>
             </>
           )}

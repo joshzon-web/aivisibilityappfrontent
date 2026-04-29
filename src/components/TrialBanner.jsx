@@ -85,17 +85,20 @@ export default function TrialBanner() {
       >
         Subscribe →
       </button>
-      <button
-        onClick={() => setDismissed(true)}
-        style={{
-          position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
-          background: 'none', border: 'none', color: txtColor, cursor: 'pointer',
-          fontSize: '1rem', lineHeight: 1, padding: '4px',
-        }}
-        aria-label="Dismiss"
-      >
-        ✕
-      </button>
+      {/* Only dismissible during countdown — expired banner stays until subscribed */}
+      {!is_trial_expired && (
+        <button
+          onClick={() => setDismissed(true)}
+          style={{
+            position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+            background: 'none', border: 'none', color: txtColor, cursor: 'pointer',
+            fontSize: '1rem', lineHeight: 1, padding: '4px',
+          }}
+          aria-label="Dismiss"
+        >
+          ✕
+        </button>
+      )}
     </div>
   );
 }

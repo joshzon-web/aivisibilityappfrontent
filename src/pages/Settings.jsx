@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import BrandLogo from '../components/BrandLogo';
 import Sidebar from '../components/Sidebar';
-import api, { createCheckout, createPortalSession } from '../api/client';
+import api, { createCheckout, createPortalSession, updateProfile, changePassword, getNotificationPrefs, updateNotificationPrefs } from '../api/client';
 import { useBillingStatus } from '../components/TrialBanner';
 
 // ── Plan definitions (mirrors core/billing.py) ────────────────────────────────
@@ -22,6 +23,334 @@ const PLAN_FEATURES = {
   agency: ['75 scans / month', '20 businesses', 'Unlimited client folders', 'Branded PDFs', 'Share links', 'Custom sender emails'],
   pro:    ['200 scans / month', 'Unlimited businesses', 'Unlimited client folders', 'Everything in Agency', 'Priority support'],
 };
+
+
+// ── Account tab ──────────────────────────────────────────────────────────────
+
+function AccountTab() {
+  const { user, updateUser } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+
+  // Profile
+  const [firstName, setFirstName] = useState(user?.first_name || '');
+  const [lastName,  setLastName]  = useState(user?.last_name  || '');
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileSaved,  setProfileSaved]  = useState(false);
+  const [profileError,  setProfileError]  = useState('');
+
+  // Password
+  const [currentPwd,  setCurrentPwd]  = useState('');
+  const [newPwd,      setNewPwd]      = useState('');
+  const [confirmPwd,  setConfirmPwd]  = useState('');
+  const [pwdSaving,   setPwdSaving]   = useState(false);
+  const [pwdSuccess,  setPwdSuccess]  = useState('');
+  const [pwdError,    setPwdError]    = useState('');
+
+  const inputStyle = {
+    width: '100%', padding: '10px 14px', fontSize: '0.88rem',
+    background: 'var(--bg)', border: '1px solid var(--border)',
+    borderRadius: '8px', color: 'var(--text)', outline: 'none',
+    boxSizing: 'border-box', fontFamily: 'inherit',
+  };
+  const labelStyle = {
+    display: 'block', fontSize: '0.75rem', fontWeight: 600,
+    color: 'var(--muted)', marginBottom: '6px', letterSpacing: '0.04em',
+    textTransform: 'uppercase',
+  };
+
+  const handleProfileSave = async (e) => {
+    e.preventDefault();
+    setProfileError('');
+    setProfileSaving(true);
+    try {
+      await updateProfile({ first_name: firstName.trim() || null, last_name: lastName.trim() || null });
+      updateUser({ first_name: firstName.trim() || null, last_name: lastName.trim() || null });
+      setProfileSaved(true);
+    } catch (err) {
+      setProfileError(err.response?.data?.detail || 'Could not save. Please try again.');
+    } finally {
+      setProfileSaving(false);
+    }
+  };
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    setPwdError('');
+    setPwdSuccess('');
+    if (newPwd.length < 8) { setPwdError('New password must be at least 8 characters.'); return; }
+    if (newPwd !== confirmPwd) { setPwdError('Passwords do not match.'); return; }
+    setPwdSaving(true);
+    try {
+      await changePassword(currentPwd, newPwd);
+      setPwdSuccess('Password updated.');
+      setCurrentPwd(''); setNewPwd(''); setConfirmPwd('');
+    } catch (err) {
+      setPwdError(err.response?.data?.detail || 'Could not update password.');
+    } finally {
+      setPwdSaving(false);
+    }
+  };
+
+  return (
+    <div>
+      <h1 style={{ fontSize: '1.6rem', fontWeight: 700, marginBottom: 4, color: 'var(--text)' }}>Account</h1>
+      <p style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: 40 }}>
+        Manage your profile, password and app preferences.
+      </p>
+
+      {/* ── Profile ── */}
+      <section style={{ marginBottom: 48 }}>
+        <h2 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: 20, color: 'var(--text)' }}>Profile</h2>
+        <form onSubmit={handleProfileSave}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 24px' }}>
+            <div style={{ marginBottom: 20 }}>
+              <label style={labelStyle}>First name</label>
+              <input
+                style={inputStyle}
+                value={firstName}
+                onChange={(e) => { setFirstName(e.target.value); setProfileSaved(false); }}
+                placeholder="Jane"
+                maxLength={80}
+              />
+            </div>
+            <div style={{ marginBottom: 20 }}>
+              <label style={labelStyle}>Last name</label>
+              <input
+                style={inputStyle}
+                value={lastName}
+                onChange={(e) => { setLastName(e.target.value); setProfileSaved(false); }}
+                placeholder="Smith"
+                maxLength={80}
+              />
+            </div>
+          </div>
+          <div style={{ marginBottom: 28 }}>
+            <label style={labelStyle}>Email</label>
+            <input
+              style={{ ...inputStyle, opacity: 0.6, cursor: 'not-allowed' }}
+              value={user?.email || ''}
+              readOnly
+            />
+            <p style={{ fontSize: '0.72rem', color: 'var(--muted)', marginTop: 5 }}>
+              To change your email address, please contact support.
+            </p>
+          </div>
+          {profileError && (
+            <div style={{ background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.3)',
+              color: 'var(--red)', borderRadius: 8, padding: '10px 14px',
+              fontSize: '0.82rem', marginBottom: 16 }}>
+              {profileError}
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+            <button type="submit" disabled={profileSaving} style={{
+              padding: '10px 28px', borderRadius: 8, fontSize: '0.88rem',
+              background: 'var(--accent)', border: 'none', color: 'var(--bg)',
+              fontWeight: 700, cursor: 'pointer', fontFamily: 'DM Mono, monospace',
+              opacity: profileSaving ? 0.6 : 1,
+            }}>
+              {profileSaving ? 'Saving…' : 'Save profile'}
+            </button>
+            {profileSaved && <span style={{ fontSize: '0.82rem', color: 'var(--accent2)' }}>✓ Saved</span>}
+          </div>
+        </form>
+      </section>
+
+      {/* ── Change password ── */}
+      <section style={{ marginBottom: 48 }}>
+        <h2 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: 20, color: 'var(--text)' }}>Change password</h2>
+        <form onSubmit={handlePasswordChange} style={{ maxWidth: 400 }}>
+          <div style={{ marginBottom: 20 }}>
+            <label style={labelStyle}>Current password</label>
+            <input
+              style={inputStyle}
+              type="password"
+              value={currentPwd}
+              onChange={(e) => setCurrentPwd(e.target.value)}
+              autoComplete="current-password"
+            />
+          </div>
+          <div style={{ marginBottom: 20 }}>
+            <label style={labelStyle}>New password</label>
+            <input
+              style={inputStyle}
+              type="password"
+              value={newPwd}
+              onChange={(e) => setNewPwd(e.target.value)}
+              autoComplete="new-password"
+            />
+          </div>
+          <div style={{ marginBottom: 24 }}>
+            <label style={labelStyle}>Confirm new password</label>
+            <input
+              style={inputStyle}
+              type="password"
+              value={confirmPwd}
+              onChange={(e) => setConfirmPwd(e.target.value)}
+              autoComplete="new-password"
+            />
+          </div>
+          {pwdError && (
+            <div style={{ background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.3)',
+              color: 'var(--red)', borderRadius: 8, padding: '10px 14px',
+              fontSize: '0.82rem', marginBottom: 16 }}>
+              {pwdError}
+            </div>
+          )}
+          {pwdSuccess && (
+            <div style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.3)',
+              color: 'var(--accent2)', borderRadius: 8, padding: '10px 14px',
+              fontSize: '0.82rem', marginBottom: 16 }}>
+              {pwdSuccess}
+            </div>
+          )}
+          <button type="submit" disabled={pwdSaving || !currentPwd || !newPwd || !confirmPwd} style={{
+            padding: '10px 28px', borderRadius: 8, fontSize: '0.88rem',
+            background: 'var(--accent)', border: 'none', color: 'var(--bg)',
+            fontWeight: 700, cursor: 'pointer', fontFamily: 'DM Mono, monospace',
+            opacity: (pwdSaving || !currentPwd || !newPwd || !confirmPwd) ? 0.5 : 1,
+          }}>
+            {pwdSaving ? 'Updating…' : 'Update password'}
+          </button>
+        </form>
+      </section>
+
+      {/* ── Appearance ── */}
+      <section style={{ marginBottom: 48 }}>
+        <h2 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: 20, color: 'var(--text)' }}>Appearance</h2>
+        <div style={{
+          border: '1px solid var(--border)', borderRadius: 12,
+          padding: '16px 20px', background: 'var(--bg-card)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', maxWidth: 400,
+        }}>
+          <div>
+            <div style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text)', marginBottom: 2 }}>
+              {theme === 'dark' ? 'Dark mode' : 'Light mode'}
+            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
+              {theme === 'dark' ? 'Switch to a lighter interface' : 'Switch to a darker interface'}
+            </div>
+          </div>
+          <button
+            onClick={toggleTheme}
+            style={{
+              padding: '8px 18px', borderRadius: 8, fontSize: '0.83rem',
+              background: 'transparent', border: '1px solid var(--border)',
+              color: 'var(--text)', cursor: 'pointer', fontWeight: 500,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {theme === 'dark' ? '☀ Light mode' : '◑ Dark mode'}
+          </button>
+        </div>
+      </section>
+
+      {/* ── Notifications ── */}
+      <NotificationsSection />
+    </div>
+  );
+}
+
+function NotificationsSection() {
+  const [prefs, setPrefs] = useState(null);
+  const [saving, setSaving] = useState(null); // key of the pref being saved
+
+  useEffect(() => {
+    getNotificationPrefs().then(r => setPrefs(r.data)).catch(() => {});
+  }, []);
+
+  const toggle = async (key) => {
+    if (!prefs || saving) return;
+    const newVal = !prefs[key];
+    setPrefs(p => ({ ...p, [key]: newVal }));
+    setSaving(key);
+    try {
+      await updateNotificationPrefs({ [key]: newVal });
+    } catch {
+      // Revert on error
+      setPrefs(p => ({ ...p, [key]: !newVal }));
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const NOTIF_ITEMS = [
+    {
+      key: 'notify_scan_complete',
+      label: 'Scan complete',
+      desc: 'Email when a scheduled scan finishes — includes score and change vs last scan.',
+    },
+    {
+      key: 'notify_score_drop',
+      label: 'Score drop alert',
+      desc: 'Email when a business score drops 10+ points — catch issues before your clients do.',
+    },
+    {
+      key: 'notify_weekly_digest',
+      label: 'Weekly digest',
+      desc: 'Monday morning summary of all businesses — name, latest score, and change.',
+    },
+  ];
+
+  return (
+    <section style={{ marginBottom: 48 }}>
+      <h2 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: 6, color: 'var(--text)' }}>
+        Notifications
+      </h2>
+      <p style={{ fontSize: '0.8rem', color: 'var(--muted)', marginBottom: 20, lineHeight: 1.5 }}>
+        All notification emails go to your account email address.
+      </p>
+      <div style={{ border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden', maxWidth: 520 }}>
+        {NOTIF_ITEMS.map((item, i) => {
+          const on = prefs ? !!prefs[item.key] : false;
+          return (
+            <div
+              key={item.key}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                gap: 16, padding: '16px 20px',
+                borderBottom: i < NOTIF_ITEMS.length - 1 ? '1px solid var(--border)' : 'none',
+                background: 'var(--bg-card)',
+              }}
+            >
+              <div>
+                <div style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text)', marginBottom: 2 }}>
+                  {item.label}
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--muted)', lineHeight: 1.5 }}>
+                  {item.desc}
+                </div>
+              </div>
+              {/* Toggle switch */}
+              <button
+                onClick={() => toggle(item.key)}
+                disabled={!prefs || saving === item.key}
+                aria-label={on ? `Disable ${item.label}` : `Enable ${item.label}`}
+                style={{
+                  flexShrink: 0,
+                  width: 44, height: 24, borderRadius: 12, border: 'none',
+                  background: on ? 'var(--accent)' : 'var(--border)',
+                  cursor: prefs && !saving ? 'pointer' : 'default',
+                  position: 'relative', transition: 'background 0.2s',
+                  opacity: !prefs ? 0.5 : 1,
+                }}
+              >
+                <span style={{
+                  position: 'absolute', top: 3,
+                  left: on ? 23 : 3,
+                  width: 18, height: 18, borderRadius: '50%',
+                  background: '#fff',
+                  transition: 'left 0.2s',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                }} />
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
 
 
 // ── Billing tab ───────────────────────────────────────────────────────────────
@@ -348,11 +677,14 @@ export default function Settings() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Tab: 'whitelabel' | 'billing'
-  const activeTab = searchParams.get('tab') === 'billing' ? 'billing' : 'whitelabel';
+  // Tab: 'whitelabel' | 'billing' | 'account'
+  const tab = searchParams.get('tab');
+  const activeTab = tab === 'billing' ? 'billing' : tab === 'account' ? 'account' : 'whitelabel';
 
-  const switchTab = (tab) => {
-    setSearchParams(tab === 'billing' ? { tab: 'billing' } : {}, { replace: true });
+  const switchTab = (t) => {
+    if (t === 'billing') setSearchParams({ tab: 'billing' }, { replace: true });
+    else if (t === 'account') setSearchParams({ tab: 'account' }, { replace: true });
+    else setSearchParams({}, { replace: true });
   };
 
   const [form, setForm] = useState({
@@ -472,10 +804,13 @@ export default function Settings() {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
-      <Sidebar active={activeTab === 'billing' ? 'billing' : 'whitelabel'} />
+      <Sidebar active={activeTab === 'billing' ? 'billing' : activeTab === 'account' ? 'account' : 'whitelabel'} />
 
       {/* Main content */}
       <main style={{ flex: 1, padding: 'clamp(24px, 4vw, 48px) clamp(20px, 4vw, 48px) 80px', maxWidth: 820, marginLeft: 'var(--sidebar-offset, 240px)' }}>
+
+        {/* ── Account tab ── */}
+        {activeTab === 'account' && <AccountTab />}
 
         {/* ── Billing tab ── */}
         {activeTab === 'billing' && <BillingTab />}

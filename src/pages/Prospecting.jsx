@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { searchBusinesses, runProspectingScan } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import Sidebar from '../components/Sidebar';
+import { useBillingStatus } from '../components/TrialBanner';
 import { SCAN_STATUSES } from '../constants/scanStatuses';
 import styles from './Prospecting.module.css';
 
@@ -12,6 +13,7 @@ const STEPS = ['Search', 'Select', 'Results'];
 
 export default function Prospecting() {
   const { user } = useAuth();
+  const { status: billingStatus } = useBillingStatus();
   const navigate = useNavigate();
 
   const [step, setStep] = useState(0);
@@ -65,7 +67,12 @@ export default function Prospecting() {
       setScanResult({ scan_id: res.data.scan_id, data: res.data.data });
     } catch (err) {
       clearInterval(statusTimerRef.current);
-      setError(err.response?.data?.detail || 'Scan failed. Please try again.');
+      const status = err?.response?.status;
+      if (status === 402) {
+        setError('__quota__:' + (err.response?.data?.detail || 'Scan limit reached.'));
+      } else {
+        setError(err.response?.data?.detail || 'Scan failed. Please try again.');
+      }
     } finally {
       setScanning(false);
       setScanStatus('');
@@ -248,13 +255,85 @@ export default function Prospecting() {
                 <div className={styles.disclaimer}>
                   ℹ This scan won't appear in your tracked businesses list — it's a one-off prospecting tool.
                 </div>
-                {error && <div className={styles.error}>{error}</div>}
-                <div className={styles.btnRow}>
-                  <button className={styles.cancelBtn} onClick={() => setStep(1)}>← Back</button>
-                  <button className={styles.btn} onClick={handleScan} disabled={!searchTerm.trim()}>
-                    Run prospecting scan →
-                  </button>
-                </div>
+
+                {/* Quota warning — ≤3 remaining shows amber, 0 shows red + disables */}
+                {(() => {
+                  const limit = billingStatus?.scans_limit;
+                  const used  = billingStatus?.scans_used ?? 0;
+                  if (limit === null || limit === undefined) return null;
+                  const remaining = Math.max(0, limit - used);
+                  if (remaining > 3) return null;
+                  if (remaining === 0) {
+                    return (
+                      <div style={{
+                        background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)',
+                        borderRadius: 8, padding: '12px 16px', fontSize: '0.83rem', color: 'var(--red)', marginBottom: 4,
+                      }}>
+                        <div style={{ marginBottom: 8 }}>You have no scans remaining this period.</div>
+                        <button
+                          type="button"
+                          onClick={() => navigate('/settings?tab=billing')}
+                          style={{
+                            padding: '6px 16px', borderRadius: 6, fontSize: '0.8rem', fontWeight: 700,
+                            background: 'var(--red)', color: '#fff', border: 'none', cursor: 'pointer',
+                          }}
+                        >
+                          View plans →
+                        </button>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div style={{
+                      background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.3)',
+                      borderRadius: 8, padding: '10px 14px', fontSize: '0.8rem', color: '#f59e0b', marginBottom: 4,
+                    }}>
+                      ⚠ {remaining} scan{remaining !== 1 ? 's' : ''} remaining this period
+                    </div>
+                  );
+                })()}
+
+                {error && error.startsWith('__quota__:') ? (
+                  <div style={{
+                    background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)',
+                    borderRadius: 8, padding: '12px 16px', fontSize: '0.83rem', color: 'var(--red)',
+                  }}>
+                    <div style={{ marginBottom: 8 }}>{error.replace('__quota__:', '')}</div>
+                    <button
+                      type="button"
+                      onClick={() => navigate('/settings?tab=billing')}
+                      style={{
+                        padding: '6px 16px', borderRadius: 6, fontSize: '0.8rem', fontWeight: 700,
+                        background: 'var(--red)', color: '#fff', border: 'none', cursor: 'pointer',
+                      }}
+                    >
+                      View plans →
+                    </button>
+                  </div>
+                ) : error ? (
+                  <div className={styles.error}>{error}</div>
+                ) : null}
+
+                {(() => {
+                  const limit = billingStatus?.scans_limit;
+                  const used  = billingStatus?.scans_used ?? 0;
+                  const remaining = limit !== null && limit !== undefined ? Math.max(0, limit - used) : null;
+                  const outOfScans = remaining !== null && remaining === 0;
+                  return (
+                    <div className={styles.btnRow}>
+                      <button className={styles.cancelBtn} onClick={() => setStep(1)}>← Back</button>
+                      <button
+                        className={styles.btn}
+                        onClick={handleScan}
+                        disabled={!searchTerm.trim() || outOfScans}
+                        style={outOfScans ? { opacity: 0.4, cursor: 'not-allowed' } : {}}
+                        title={outOfScans ? 'No scans remaining — upgrade your plan' : undefined}
+                      >
+                        Run prospecting scan →
+                      </button>
+                    </div>
+                  );
+                })()}
               </>
             )}
 

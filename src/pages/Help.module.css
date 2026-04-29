@@ -1,0 +1,146 @@
+.main {
+  flex: 1;
+  margin-left: 240px;
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+.inner {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 48px 32px 80px;
+}
+
+.heading {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 8px;
+}
+
+.sub {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin: 0 0 40px;
+}
+
+.chatLink {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: inherit;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.chatLink:hover {
+  opacity: 0.8;
+}
+
+/* FAQ list */
+.faqList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 48px;
+}
+
+.faqItem {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: border-color var(--duration-fast);
+}
+
+.faqItemOpen {
+  border-color: var(--accent);
+}
+
+.faqQuestion {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: color var(--duration-fast);
+}
+
+.faqQuestion:hover {
+  color: var(--accent);
+}
+
+.faqChevron {
+  flex-shrink: 0;
+  font-size: 0.6rem;
+  color: var(--muted);
+}
+
+.faqAnswer {
+  padding: 0 20px 16px;
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.65;
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+
+/* Chat CTA card */
+.chatCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px 32px;
+  text-align: center;
+}
+
+.chatCardTitle {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.chatCardText {
+  color: var(--muted);
+  font-size: 0.875rem;
+  margin: 0 0 20px;
+  line-height: 1.6;
+}
+
+.chatBtn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity var(--duration-fast);
+}
+
+.chatBtn:hover {
+  opacity: 0.85;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .main {
+    margin-left: 0;
+  }
+
+  .inner {
+    padding: 24px 20px 60px;
+  }
+}
