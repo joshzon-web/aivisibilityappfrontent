@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { login, signup, resendVerification, forgotPassword } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import styles from './Auth.module.css';
 import { getPasswordStrength as getStrength, STRENGTH_LABEL, STRENGTH_COLOR } from '../hooks/usePasswordStrength';
 
 export default function Auth() {
-  const [mode, setMode] = useState('login'); // 'login' | 'signup'
+  const [searchParams] = useSearchParams();
+  const [mode, setMode] = useState(searchParams.get('mode') === 'signup' ? 'signup' : 'login');
 
   // Shared fields
   const [email, setEmail]       = useState('');
@@ -126,11 +127,11 @@ export default function Auth() {
     return (
       <div className={styles.page}>
         <div className={styles.grid} />
-        <div className={styles.card + ' fade-up'} style={{ textAlign: 'center' }}>
+        <div className={styles.cardWrap + ' fade-up'}>
           <div className={styles.logo}>
-            <span className={styles.logoMark}>◈</span>
-            <span className={styles.logoText}>AI VISIBILITY</span>
+            <img src="/lokscope-logo.png" alt="Lokscope" style={{ height: 28, width: 'auto' }} />
           </div>
+          <div className={styles.card} style={{ textAlign: 'center' }}>
           <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>✉️</div>
           <h1 className={styles.title} style={{ fontSize: '1.4rem' }}>Check your email</h1>
           <p className={styles.sub} style={{ marginBottom: '4px' }}>We sent a verification link to</p>
@@ -168,6 +169,7 @@ export default function Auth() {
               Sign in
             </button>
           </p>
+          </div>
         </div>
       </div>
     );
@@ -178,11 +180,11 @@ export default function Auth() {
     return (
       <div className={styles.page}>
         <div className={styles.grid} />
-        <div className={styles.card + ' fade-up'}>
+        <div className={styles.cardWrap + ' fade-up'}>
           <div className={styles.logo}>
-            <span className={styles.logoMark}>◈</span>
-            <span className={styles.logoText}>AI VISIBILITY</span>
+            <img src="/lokscope-logo.png" alt="Lokscope" style={{ height: 28, width: 'auto' }} />
           </div>
+          <div className={styles.card}>
 
           {forgotSent ? (
             <div style={{ textAlign: 'center' }}>
@@ -232,6 +234,7 @@ export default function Auth() {
               </p>
             </>
           )}
+          </div>
         </div>
       </div>
     );
@@ -242,11 +245,11 @@ export default function Auth() {
     <div className={styles.page}>
       <div className={styles.grid} />
 
-      <div className={styles.card + ' fade-up'}>
+      <div className={styles.cardWrap + ' fade-up'}>
         <div className={styles.logo}>
-          <span className={styles.logoMark}>◈</span>
-          <span className={styles.logoText}>AI VISIBILITY</span>
+          <img src="/lokscope-logo.png" alt="Lokscope" style={{ height: 28, width: 'auto' }} />
         </div>
+        <div className={styles.card}>
 
         <h1 className={styles.title}>
           {mode === 'login' ? 'Welcome back' : 'Start your free trial'}
@@ -408,6 +411,7 @@ export default function Auth() {
             See pricing & plans →
           </button>
         </p>
+        </div>
       </div>
     </div>
   );

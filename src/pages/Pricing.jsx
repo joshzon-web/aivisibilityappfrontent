@@ -113,7 +113,7 @@ export default function Pricing() {
 
             <button
               className={`${styles.cta} ${plan.recommended ? styles.ctaRecommended : ''}`}
-              onClick={() => navigate('/auth')}
+              onClick={() => navigate('/auth?mode=signup')}
             >
               Start free trial
             </button>

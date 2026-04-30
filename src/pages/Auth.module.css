@@ -17,22 +17,29 @@
   pointer-events: none;
 }
 
+.cardWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  max-width: 500px;
+}
+
 .card {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 20px;
   padding: 48px;
   width: 100%;
-  max-width: 500px;
   position: relative;
   box-shadow: 0 0 80px rgba(56,189,248,0.06);
 }
 
 .logo {
   display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 32px;
 }
 
 .logoMark {

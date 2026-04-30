@@ -19,8 +19,8 @@ export default function BrandLogo({ height = 28, style = {}, publicBrand, onClic
   // publicBrand wins over auth context for share pages
   const brand = publicBrand || auth?.brand || {};
 
-  const src  = brand.logo_url  || '/redrock-logo.svg';
-  const name = brand.brand_name || 'RedRock Rep';
+  const src  = brand.logo_url  || '/lokscope-logo.png';
+  const name = brand.brand_name || 'Lokscope';
 
   return (
     <img

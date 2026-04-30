@@ -39,11 +39,14 @@ export default function Sidebar({ active, extra = [] }) {
           Clients
         </button>
         <button className={navCls('all-businesses')} onClick={() => navigate('/all-businesses')}>
-          All businesses
+          All locations
         </button>
         <button className={navCls('prospecting')} onClick={() => navigate('/prospecting')}>
           Prospecting
         </button>
+
+        <div className={styles.navDivider} />
+
         <button className={navCls('whitelabel')} onClick={() => navigate('/settings')}>
           White-label
         </button>
@@ -58,6 +61,7 @@ export default function Sidebar({ active, extra = [] }) {
           <div className={styles.userDot} />
           <span>{user?.email}</span>
         </div>
+        <div className={styles.footerDivider} />
         <button
           className={styles.themeToggle}
           onClick={() => navigate('/help')}

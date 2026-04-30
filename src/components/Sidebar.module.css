@@ -32,8 +32,9 @@
   text-align: left;
   background: none;
   border: none;
+  border-left: 2px solid transparent;
   color: var(--muted);
-  padding: 10px 12px;
+  padding: 10px 12px 10px 10px;
   border-radius: 8px;
   font-size: var(--text-sm);
   font-family: 'DM Mono', monospace;
@@ -48,8 +49,24 @@
 }
 
 .navItemActive {
-  background: rgba(56, 189, 248, 0.1);
+  background: rgba(56, 189, 248, 0.12);
   color: var(--accent);
+  border-left: 2px solid var(--accent);
+  font-weight: 600;
+}
+
+.navDivider {
+  height: 1px;
+  background: var(--border);
+  margin: 8px 12px;
+  opacity: 0.5;
+}
+
+.footerDivider {
+  height: 1px;
+  background: var(--border);
+  margin: 8px 0;
+  opacity: 0.5;
 }
 
 .footer {

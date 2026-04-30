@@ -163,8 +163,8 @@ export default function AllBusinesses() {
             <>
               <div className={styles.header + ' fade-up'}>
                 <div>
-                  <h1 className={styles.title}>All businesses</h1>
-                  <p className={styles.sub}>{businesses.length} business{businesses.length !== 1 ? 'es' : ''} tracked</p>
+                  <h1 className={styles.title}>All locations</h1>
+                  <p className={styles.sub}>{businesses.length} location{businesses.length !== 1 ? 's' : ''} tracked</p>
                 </div>
                 <button className={styles.newBtn} onClick={() => setShowNewScan(true)}>+ Track new business</button>
               </div>
