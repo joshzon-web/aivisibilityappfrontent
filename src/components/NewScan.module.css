@@ -197,3 +197,17 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+.urlToggle {
+  display: block;
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  padding: 12px 0 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  opacity: 0.8;
+}
+.urlToggle:hover { opacity: 1; }

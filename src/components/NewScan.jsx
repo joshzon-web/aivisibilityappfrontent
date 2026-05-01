@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { searchBusinesses, runScan, probeBusinessLabel } from '../api/client';
+import { searchBusinesses, runScan, probeBusinessLabel, resolveBusinessUrl } from '../api/client';
 import { useBillingStatus } from './TrialBanner';
 import styles from './NewScan.module.css';
 import { SCAN_STATUSES } from '../constants/scanStatuses';
@@ -28,6 +28,10 @@ export default function NewScan({ onComplete, onCancel, clientId = null }) {
   const [probing, setProbing]         = useState(false);
   const [areaLabel, setAreaLabel]     = useState('');
 
+  const [urlMode, setUrlMode]     = useState(false);
+  const [mapsUrl, setMapsUrl]     = useState('');
+  const [resolving, setResolving] = useState(false);
+
   const handleSearch = async (e) => {
     e.preventDefault();
     setError('');
@@ -40,6 +44,20 @@ export default function NewScan({ onComplete, onCancel, clientId = null }) {
       setError('Could not find businesses. Check your query.');
     } finally {
       setSearching(false);
+    }
+  };
+
+  const handleResolveUrl = async (e) => {
+    e.preventDefault();
+    setError('');
+    setResolving(true);
+    try {
+      const res = await resolveBusinessUrl(mapsUrl);
+      handleSelect(res.data);
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Could not find a business from that URL.');
+    } finally {
+      setResolving(false);
     }
   };
 
@@ -117,25 +135,64 @@ export default function NewScan({ onComplete, onCancel, clientId = null }) {
       {/* Step 0 — Search */}
       {step === 0 && (
         <div className={styles.card + ' fade-up-1'}>
-          <h2 className={styles.cardTitle}>Find your business</h2>
-          <p className={styles.cardSub}>Search Google Maps to find the business you want to scan</p>
-          <form onSubmit={handleSearch} className={styles.form}>
-            <input
-              className={styles.input}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="e.g. Bella Italia Manchester"
-              required
-              autoFocus
-            />
-            {error && <div className={styles.error}>{error}</div>}
-            <div className={styles.btnRow}>
-              <button type="button" className={styles.cancelBtn} onClick={onCancel}>Cancel</button>
-              <button type="submit" className={styles.btn} disabled={searching}>
-                {searching ? 'Searching...' : 'Search →'}
+          {!urlMode ? (
+            <>
+              <h2 className={styles.cardTitle}>Find your business</h2>
+              <p className={styles.cardSub}>Search Google Maps to find the business you want to scan</p>
+              <form onSubmit={handleSearch} className={styles.form}>
+                <input
+                  className={styles.input}
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="e.g. Bella Italia Manchester"
+                  required
+                  autoFocus
+                />
+                {error && <div className={styles.error}>{error}</div>}
+                <div className={styles.btnRow}>
+                  <button type="button" className={styles.cancelBtn} onClick={onCancel}>Cancel</button>
+                  <button type="submit" className={styles.btn} disabled={searching}>
+                    {searching ? 'Searching...' : 'Search →'}
+                  </button>
+                </div>
+              </form>
+              <button
+                type="button"
+                className={styles.urlToggle}
+                onClick={() => { setUrlMode(true); setError(''); }}
+              >
+                Can't find it? Paste a Google Maps URL →
               </button>
-            </div>
-          </form>
+            </>
+          ) : (
+            <>
+              <h2 className={styles.cardTitle}>Paste a Google Maps link</h2>
+              <p className={styles.cardSub}>Open the business on Google Maps, copy the URL from your browser address bar, and paste it here.</p>
+              <form onSubmit={handleResolveUrl} className={styles.form}>
+                <input
+                  className={styles.input}
+                  value={mapsUrl}
+                  onChange={(e) => setMapsUrl(e.target.value)}
+                  placeholder="https://www.google.com/maps/place/..."
+                  required
+                  autoFocus
+                />
+                {error && <div className={styles.error}>{error}</div>}
+                <div className={styles.btnRow}>
+                  <button
+                    type="button"
+                    className={styles.cancelBtn}
+                    onClick={() => { setUrlMode(false); setError(''); }}
+                  >
+                    ← Back to search
+                  </button>
+                  <button type="submit" className={styles.btn} disabled={resolving}>
+                    {resolving ? 'Looking up…' : 'Use this link →'}
+                  </button>
+                </div>
+              </form>
+            </>
+          )}
         </div>
       )}
 

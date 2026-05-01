@@ -99,6 +99,9 @@ export const runProspectingScan = (place_id, search_term, opts = {}) => {
 export const probeBusinessLabel = (place_id) =>
   api.get('/businesses/probe-label', { params: { place_id } });
 
+export const resolveBusinessUrl = (url) =>
+  api.get('/businesses/resolve-url', { params: { url } });
+
 // Post-hoc edit of the search area for an already-tracked business.
 export const updateBusinessSearchLabel = (id, search_label) =>
   api.patch(`/businesses/${id}/search_label`, { search_label });
