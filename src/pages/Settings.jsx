@@ -674,7 +674,7 @@ function BillingTab() {
 
 export default function Settings() {
   const { brand, refreshBrand } = useAuth();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
 
   // Tab: 'whitelabel' | 'billing' | 'account'
   const tab = searchParams.get('tab');
