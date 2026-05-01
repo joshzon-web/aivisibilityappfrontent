@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import BrandLogo from '../components/BrandLogo';
@@ -679,12 +679,6 @@ export default function Settings() {
   // Tab: 'whitelabel' | 'billing' | 'account'
   const tab = searchParams.get('tab');
   const activeTab = tab === 'billing' ? 'billing' : tab === 'account' ? 'account' : 'whitelabel';
-
-  const switchTab = (t) => {
-    if (t === 'billing') setSearchParams({ tab: 'billing' }, { replace: true });
-    else if (t === 'account') setSearchParams({ tab: 'account' }, { replace: true });
-    else setSearchParams({}, { replace: true });
-  };
 
   const [form, setForm] = useState({
     brand_name:    brand.brand_name    || '',
