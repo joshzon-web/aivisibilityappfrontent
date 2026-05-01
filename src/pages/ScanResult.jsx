@@ -393,8 +393,10 @@ const perplexityTotal = perplexityChecks.length;
   return (
     <div className={styles.layout}>
       {!publicMode && (
-        <Sidebar extra={businessId ? [{ label: `↩ ${businessName}`, onClick: () => navigate(`/business/${businessId}`) }] : []} />
-        <MobileNav active="dashboard" />
+        <>
+          <Sidebar extra={businessId ? [{ label: `↩ ${businessName}`, onClick: () => navigate(`/business/${businessId}`) }] : []} />
+          <MobileNav active="dashboard" />
+        </>
       )}
 
       <main className={styles.main} style={publicMode ? { marginLeft: 0, maxWidth: '100vw' } : undefined}>
