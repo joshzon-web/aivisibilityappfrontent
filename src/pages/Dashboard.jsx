@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 import { useConfirm } from '../components/ConfirmModal';
 import Sidebar from '../components/Sidebar';
+import MobileNav from '../components/MobileNav';
 import EmptyState from '../components/EmptyState';
 import TrialBanner, { useBillingStatus } from '../components/TrialBanner';
 import WelcomeModal from '../components/WelcomeModal';
@@ -173,6 +174,7 @@ export default function Dashboard() {
   return (
     <div className={styles.layout}>
       <Sidebar active="dashboard" />
+      <MobileNav active="dashboard" />
       {showWelcome && (
         <WelcomeModal
           onGetStarted={() => { setShowWelcome(false); setShowNew(true); }}

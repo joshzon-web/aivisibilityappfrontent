@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Sidebar from '../components/Sidebar';
+import MobileNav from '../components/MobileNav';
 import styles from './Help.module.css';
 
 const FAQS = [
@@ -63,6 +64,7 @@ export default function Help() {
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
       <Sidebar active="help" />
+      <MobileNav active="settings" />
       <main className={styles.main}>
         <div className={styles.inner}>
           <h1 className={styles.heading}>Help &amp; FAQ</h1>

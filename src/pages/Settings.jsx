@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import BrandLogo from '../components/BrandLogo';
 import Sidebar from '../components/Sidebar';
+import MobileNav from '../components/MobileNav';
 import api, { createCheckout, createPortalSession, updateProfile, changePassword, getNotificationPrefs, updateNotificationPrefs } from '../api/client';
 import { useBillingStatus } from '../components/TrialBanner';
 
@@ -782,9 +783,10 @@ export default function Settings() {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
       <Sidebar active={activeTab === 'billing' ? 'billing' : activeTab === 'account' ? 'account' : 'whitelabel'} />
+      <MobileNav active="settings" />
 
       {/* Main content */}
-      <main style={{ flex: 1, padding: 'clamp(24px, 4vw, 48px) clamp(20px, 4vw, 48px) 80px', maxWidth: 820, marginLeft: 'var(--sidebar-offset, 240px)' }}>
+      <main style={{ flex: 1, padding: 'clamp(24px, 4vw, 48px) clamp(20px, 4vw, 48px) clamp(80px, 10vw, 80px)', maxWidth: 820, marginLeft: 'var(--sidebar-offset, 240px)', boxSizing: 'border-box' }}>
 
         {/* ── Account tab ── */}
         {activeTab === 'account' && <AccountTab />}

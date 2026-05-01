@@ -6,6 +6,7 @@ import { getBusinessScans, getBusiness, runScan, updateBusinessSchedule, deleteS
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../components/ConfirmModal';
 import Sidebar from '../components/Sidebar';
+import MobileNav from '../components/MobileNav';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import styles from './Business.module.css';
 
@@ -227,6 +228,7 @@ export default function Business() {
   return (
     <div className={styles.layout}>
       <Sidebar extra={[{ label: '← Back', onClick: () => navigate(-1) }]} />
+      <MobileNav active="dashboard" />
 
       <main className={styles.main}>
         <div className={styles.header + ' fade-up'}>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { searchBusinesses, runProspectingScan } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import Sidebar from '../components/Sidebar';
+import MobileNav from '../components/MobileNav';
 import { useBillingStatus } from '../components/TrialBanner';
 import { SCAN_STATUSES } from '../constants/scanStatuses';
 import styles from './Prospecting.module.css';
@@ -131,6 +132,7 @@ export default function Prospecting() {
   return (
     <div className={styles.layout}>
       <Sidebar active="prospecting" />
+      <MobileNav active="prospecting" />
 
       <main className={styles.main}>
         {/* Page header */}

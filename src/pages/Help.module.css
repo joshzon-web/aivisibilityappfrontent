@@ -138,6 +138,7 @@
 @media (max-width: 768px) {
   .main {
     margin-left: 0;
+    padding-bottom: 70px;
   }
 
   .inner {

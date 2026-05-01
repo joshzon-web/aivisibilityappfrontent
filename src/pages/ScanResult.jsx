@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../components/ConfirmModal';
 import BrandLogo from '../components/BrandLogo';
 import Sidebar from '../components/Sidebar';
+import MobileNav from '../components/MobileNav';
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell, LabelList } from 'recharts';
 import styles from './ScanResult.module.css';
 
@@ -393,6 +394,7 @@ const perplexityTotal = perplexityChecks.length;
     <div className={styles.layout}>
       {!publicMode && (
         <Sidebar extra={businessId ? [{ label: `↩ ${businessName}`, onClick: () => navigate(`/business/${businessId}`) }] : []} />
+        <MobileNav active="dashboard" />
       )}
 
       <main className={styles.main} style={publicMode ? { marginLeft: 0, maxWidth: '100vw' } : undefined}>

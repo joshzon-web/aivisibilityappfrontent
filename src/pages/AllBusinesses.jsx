@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 import { useConfirm } from '../components/ConfirmModal';
 import Sidebar from '../components/Sidebar';
+import MobileNav from '../components/MobileNav';
 import NewScan from '../components/NewScan';
 import EmptyState from '../components/EmptyState';
 import TrialBanner from '../components/TrialBanner';
@@ -153,6 +154,7 @@ export default function AllBusinesses() {
   return (
     <div className={styles.layout}>
       <Sidebar active="all-businesses" />
+      <MobileNav active="all-businesses" />
 
       <main className={styles.main} style={{ padding: 0 }}>
         <TrialBanner />
