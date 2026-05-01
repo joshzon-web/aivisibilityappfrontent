@@ -55,9 +55,18 @@ export default function Prospecting() {
     setResolving(true);
     try {
       const res = await resolveBusinessUrl(mapsUrl);
-      handleSelect(res.data);
+      setResults(res.data.results);
+      setUrlMode(false);
+      setStep(1);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Could not find a business from that URL.');
+      const extracted = err.response?.data?.detail?.extracted_name || '';
+      if (extracted) {
+        setQuery(extracted);
+        setUrlMode(false);
+        setError('We couldn\'t resolve that link directly — try searching by name instead.');
+      } else {
+        setError('Could not find a business from that URL. Try copying the full link from your browser address bar.');
+      }
     } finally {
       setResolving(false);
     }

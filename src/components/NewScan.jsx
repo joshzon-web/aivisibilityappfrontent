@@ -53,9 +53,21 @@ export default function NewScan({ onComplete, onCancel, clientId = null }) {
     setResolving(true);
     try {
       const res = await resolveBusinessUrl(mapsUrl);
-      handleSelect(res.data);
+      // Show candidates in the Select step — same flow as a normal search
+      setResults(res.data.results);
+      setUrlMode(false);
+      setStep(1);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Could not find a business from that URL.');
+      // Pre-fill the search box with whatever name we extracted so the
+      // user can search manually without retyping
+      const extracted = err.response?.data?.detail?.extracted_name || '';
+      if (extracted) {
+        setQuery(extracted);
+        setUrlMode(false);
+        setError('We couldn\'t resolve that link directly — try searching by name instead.');
+      } else {
+        setError('Could not find a business from that URL. Try copying the full link from your browser address bar.');
+      }
     } finally {
       setResolving(false);
     }
