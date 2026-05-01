@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import styles from './Help.module.css';
 
@@ -60,7 +59,6 @@ function FaqItem({ q, a }) {
 }
 
 export default function Help() {
-  const navigate = useNavigate();
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>

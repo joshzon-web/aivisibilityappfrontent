@@ -673,8 +673,7 @@ function BillingTab() {
 // ── Main Settings page ────────────────────────────────────────────────────────
 
 export default function Settings() {
-  const { user, brand, refreshBrand } = useAuth();
-  const navigate = useNavigate();
+  const { brand, refreshBrand } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Tab: 'whitelabel' | 'billing' | 'account'
@@ -785,22 +784,6 @@ export default function Settings() {
   };
   const fieldStyle = { marginBottom: '20px' };
   const hintStyle  = { fontSize: '0.72rem', color: 'var(--muted)', marginTop: '5px' };
-
-  const navBtn = (tab, label, active) => (
-    <button
-      onClick={() => switchTab(tab)}
-      style={{
-        background: active ? 'rgba(56,189,248,0.08)' : 'none',
-        border: 'none',
-        color: active ? 'var(--accent)' : 'var(--muted)',
-        cursor: active ? 'default' : 'pointer',
-        fontWeight: active ? 600 : 400,
-        padding: '8px 10px', borderRadius: 6, textAlign: 'left', fontSize: '0.85rem',
-      }}
-    >
-      {label}
-    </button>
-  );
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>

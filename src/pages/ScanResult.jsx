@@ -160,8 +160,7 @@ export default function ScanResult({ publicMode = false }) {
   const id = publicMode ? null : params.id;
   const shareToken = publicMode ? params.token : null;
 
-  const auth = useAuth();
-  const user = auth?.user;
+  useAuth();
   const { confirm } = useConfirm();
   const navigate = useNavigate();
   const [scan, setScan] = useState(null);

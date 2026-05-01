@@ -12,7 +12,7 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
 const STEPS = ['Search', 'Select', 'Results'];
 
 export default function Prospecting() {
-  const { user } = useAuth();
+  useAuth();
   const { status: billingStatus } = useBillingStatus();
   const navigate = useNavigate();
 

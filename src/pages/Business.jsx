@@ -12,7 +12,7 @@ import styles from './Business.module.css';
 export default function Business() {
   const { id } = useParams();
   const location = useLocation();
-  const { user } = useAuth();
+  useAuth();
   const { confirm } = useConfirm();
   const navigate = useNavigate();
   const [scans, setScans] = useState([]);
