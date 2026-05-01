@@ -392,7 +392,7 @@ export default function Prospecting() {
                       className={styles.pdfBtn}
                       style={{ cursor: pdfLoading ? 'not-allowed' : 'pointer', opacity: pdfLoading ? 0.6 : 1 }}
                     >
-                      {pdfLoading ? 'Generating…' : '↓ Download sales report (PDF)'}
+                      {pdfLoading ? 'Generating…' : '↓ Download prospecting report (PDF)'}
                     </button>
                   </div>
 

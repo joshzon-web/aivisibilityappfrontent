@@ -43,8 +43,7 @@ export default function ResetPassword() {
       <div className={styles.grid} />
       <div className={styles.card + ' fade-up'}>
         <div className={styles.logo}>
-          <span className={styles.logoMark}>◈</span>
-          <span className={styles.logoText}>AI VISIBILITY</span>
+          <img src="/lokscope-logo.png" alt="Lokscope" style={{ height: 28, width: 'auto' }} />
         </div>
 
         {done ? (

@@ -12,8 +12,9 @@ export default function Auth() {
   // Shared fields
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError]       = useState('');
-  const [loading, setLoading]   = useState(false);
+  const [error, setError]             = useState('');
+  const [loading, setLoading]         = useState(false);
+  const [showResendPrompt, setShowResendPrompt] = useState(false);
 
   // Signup-only fields
   const [firstName, setFirstName]         = useState('');
@@ -29,9 +30,10 @@ export default function Auth() {
   const [forgotLoading, setForgotLoading] = useState(false);
 
   // Post-signup "check your email" screen
-  const [verifyEmail, setVerifyEmail]   = useState('');
+  const [verifyEmail, setVerifyEmail]       = useState('');
+  const [emailSendFailed, setEmailSendFailed] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
-  const [resendStatus, setResendStatus] = useState('');
+  const [resendStatus, setResendStatus]     = useState('');
   const cooldownRef = useRef(null);
 
   const { loginUser } = useAuth();
@@ -64,6 +66,7 @@ export default function Auth() {
   const switchMode = (next) => {
     setMode(next);
     setError('');
+    setShowResendPrompt(false);
     setTouched({});
     setConfirm('');
     setFirstName('');
@@ -112,11 +115,17 @@ export default function Auth() {
         loginUser(res.data.token, { email: res.data.email, id: res.data.id });
         navigate('/dashboard');
       } else {
-        await signup(email, password, firstName.trim(), lastName.trim());
+        const signupRes = await signup(email, password, firstName.trim(), lastName.trim());
+        setEmailSendFailed(signupRes.data?.email_sent === false);
         setVerifyEmail(email);
       }
     } catch (err) {
-      setError(err.response?.data?.detail || 'Something went wrong.');
+      const detail = err.response?.data?.detail || '';
+      if (err.response?.status === 403 && detail.toLowerCase().includes('verify')) {
+        setShowResendPrompt(true);
+      } else {
+        setError(detail || 'Something went wrong.');
+      }
     } finally {
       setLoading(false);
     }
@@ -134,12 +143,23 @@ export default function Auth() {
           <div className={styles.card} style={{ textAlign: 'center' }}>
           <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>✉️</div>
           <h1 className={styles.title} style={{ fontSize: '1.4rem' }}>Check your email</h1>
-          <p className={styles.sub} style={{ marginBottom: '4px' }}>We sent a verification link to</p>
-          <p style={{ fontWeight: 600, marginBottom: '16px', color: 'var(--text)' }}>{verifyEmail}</p>
-          <p className={styles.sub} style={{ fontSize: '0.82rem', lineHeight: 1.6, marginBottom: 0 }}>
-            Click the link to activate your account and start your 7-day free trial.<br />
-            The link expires in 24 hours — check your spam folder if you don't see it.
-          </p>
+          {emailSendFailed ? (
+            <>
+              <p style={{ color: 'var(--red)', fontSize: '0.85rem', marginBottom: '12px' }}>
+                We couldn't send the verification email. Use the button below to try again.
+              </p>
+              <p style={{ fontWeight: 600, marginBottom: '16px', color: 'var(--text)' }}>{verifyEmail}</p>
+            </>
+          ) : (
+            <>
+              <p className={styles.sub} style={{ marginBottom: '4px' }}>We sent a verification link to</p>
+              <p style={{ fontWeight: 600, marginBottom: '16px', color: 'var(--text)' }}>{verifyEmail}</p>
+              <p className={styles.sub} style={{ fontSize: '0.82rem', lineHeight: 1.6, marginBottom: 0 }}>
+                Click the link to activate your account and start your 7-day free trial.<br />
+                The link expires in 24 hours — check your spam folder if you don't see it.
+              </p>
+            </>
+          )}
 
           <button
             className={styles.btn}
@@ -387,6 +407,19 @@ export default function Auth() {
             </label>
           )}
 
+          {showResendPrompt && (
+            <div className={styles.error} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <span>Your email hasn't been verified yet.</span>
+              <button
+                type="button"
+                className={styles.btn}
+                style={{ margin: 0 }}
+                onClick={() => { setVerifyEmail(email); setShowResendPrompt(false); }}
+              >
+                Resend verification email
+              </button>
+            </div>
+          )}
           {error && <div className={styles.error}>{error}</div>}
 
           <button type="submit" className={styles.btn} disabled={loading}>

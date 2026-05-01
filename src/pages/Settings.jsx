@@ -974,10 +974,10 @@ export default function Settings() {
                 </div>
               </section>
 
-              {/* ── Sales report settings ── */}
+              {/* ── Prospecting report settings ── */}
               <section style={{ marginBottom: 40 }}>
                 <h2 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: 4, color: 'var(--text)' }}>
-                  Sales report
+                  Prospecting report
                 </h2>
                 <p style={{ fontSize: '0.8rem', color: 'var(--muted)', marginBottom: 20, lineHeight: 1.6 }}>
                   Customise the one-page sales PDF sent to prospects. The cold email handles the pitch —
