@@ -116,4 +116,9 @@ a { text-decoration: none; color: inherit; }
 
 @media (max-width: 768px) {
   :root { --sidebar-offset: 0px; }
+
+  /* Push Crisp chat bubble above the mobile nav bar */
+  .crisp-client {
+    bottom: 75px !important;
+  }
 }

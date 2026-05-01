@@ -2,10 +2,10 @@ import { useNavigate } from 'react-router-dom';
 import styles from './MobileNav.module.css';
 
 const TABS = [
-  { key: 'dashboard',      label: 'Clients',      path: '/dashboard',      icon: '⊞' },
-  { key: 'all-businesses', label: 'Locations',    path: '/all-businesses', icon: '≡' },
-  { key: 'prospecting',    label: 'Prospect',     path: '/prospecting',    icon: '◈' },
-  { key: 'settings',       label: 'Settings',     path: '/settings',       icon: '⚙' },
+  { key: 'dashboard',      label: 'Clients',    path: '/dashboard',      icon: '🏢' },
+  { key: 'all-businesses', label: 'Locations',  path: '/all-businesses', icon: '📍' },
+  { key: 'prospecting',    label: 'Prospect',   path: '/prospecting',    icon: '🔍' },
+  { key: 'settings',       label: 'Settings',   path: '/settings',       icon: '⚙️' },
 ];
 
 export default function MobileNav({ active }) {

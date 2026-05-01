@@ -536,6 +536,16 @@
   .mainPad {
     padding: 24px 20px;
   }
+  .header {
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-start;
+    margin-bottom: 20px;
+  }
+  .newBtn {
+    width: 100%;
+    text-align: center;
+  }
   .toolbar {
     flex-wrap: wrap;
     gap: 8px;
