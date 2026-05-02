@@ -54,10 +54,11 @@
 
 @media (max-width: 768px) {
   .headerActions {
-    width: 100%;
+    flex: 0 0 100%;
     flex-direction: column;
     align-items: stretch;
     gap: 8px;
+    min-width: 0;
   }
   .autoSendBtn {
     justify-content: space-between;

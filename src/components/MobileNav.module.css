@@ -18,11 +18,9 @@
   .tab {
     flex: 1;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 3px;
-    padding: 10px 4px;
+    padding: 14px 4px;
     background: none;
     border: none;
     cursor: pointer;
@@ -38,14 +36,9 @@
     color: var(--accent);
   }
 
-  .icon {
-    font-size: 1.25rem;
-    line-height: 1;
-  }
-
   .label {
-    font-size: 0.65rem;
-    font-weight: 500;
-    letter-spacing: 0.01em;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
   }
 }

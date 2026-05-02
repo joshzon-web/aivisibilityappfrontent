@@ -1042,7 +1042,20 @@ export default function Settings() {
             </form>
           </>
         )}
-      </main>
+      {/* Mobile-only help link — Crisp widget is hidden on mobile */}
+      <div className="mobile-only" style={{ padding: '0 32px 24px' }}>
+        <button
+          onClick={() => window.$crisp?.push(['do', 'chat:open'])}
+          style={{
+            background: 'none', border: '1px solid var(--border)', color: 'var(--muted)',
+            borderRadius: 10, padding: '12px 20px', fontSize: '0.85rem', cursor: 'pointer',
+            width: '100%',
+          }}
+        >
+          Help &amp; support →
+        </button>
+      </div>
+</main>
     </div>
   );
 }

@@ -114,11 +114,14 @@ a { text-decoration: none; color: inherit; }
 .fade-up-3 { animation: fadeUp 0.4s 0.3s ease both; }
 .fade-up-4 { animation: fadeUp 0.4s 0.4s ease both; }
 
+/* Mobile-only utility — shown only on small screens */
+.mobile-only { display: none; }
+
 @media (max-width: 768px) {
   :root { --sidebar-offset: 0px; }
 
-  /* Push Crisp chat bubble above the mobile nav bar */
-  .crisp-client {
-    bottom: 75px !important;
-  }
+  /* Hide Crisp chat bubble on mobile — Help link is in Settings */
+  #crisp-chatbox { display: none !important; }
+
+  .mobile-only { display: block; }
 }
