@@ -343,8 +343,15 @@
   .main {
     margin-left: 0;
     max-width: 100vw;
-    padding-bottom: 70px;
+    padding-bottom: 80px;
+    overflow-x: hidden;
   }
+  .summaryRow { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .scanBtn { white-space: normal; }
+  .historyRow { flex-wrap: wrap; gap: 6px; }
+  .historyDate { min-width: 0; flex: 1 1 auto; font-size: 0.75rem; }
+  .historyScore { min-width: 0; }
+  .viewLink { min-width: 0; }
 }
 
 /* Scanning overlay — shown while a new scan is running */
