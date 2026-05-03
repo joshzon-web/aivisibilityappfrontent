@@ -114,6 +114,15 @@ a { text-decoration: none; color: inherit; }
 .fade-up-3 { animation: fadeUp 0.4s 0.3s ease both; }
 .fade-up-4 { animation: fadeUp 0.4s 0.4s ease both; }
 
+/* #5 — global focus states so inline-styled inputs don't look broken */
+input:not([type="color"]):not([type="file"]):not([type="range"]):focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(56,189,248,0.12) !important;
+}
+
 /* Mobile-only utility — shown only on small screens */
 .mobile-only { display: none; }
 

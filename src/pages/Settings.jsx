@@ -771,14 +771,19 @@ export default function Settings() {
     background: 'var(--bg)', border: '1px solid var(--border)',
     borderRadius: '8px', color: 'var(--text)', outline: 'none',
     boxSizing: 'border-box', fontFamily: 'inherit',
+    transition: 'border-color 0.15s',
   };
+  // #1 — sentence case, muted gray (not all-caps)
   const labelStyle = {
     display: 'block', fontSize: '0.75rem', fontWeight: 600,
-    color: 'var(--muted)', marginBottom: '6px', letterSpacing: '0.04em',
-    textTransform: 'uppercase',
+    color: '#8b8fa8', marginBottom: '6px',
   };
   const fieldStyle = { marginBottom: '20px' };
-  const hintStyle  = { fontSize: '0.72rem', color: 'var(--muted)', marginTop: '5px' };
+  // #2 — slightly smaller and dimmer than field text
+  const hintStyle  = { fontSize: '0.70rem', color: 'var(--muted)', marginTop: '5px', opacity: 0.58 };
+  // #7 — live color preview helper
+  const isValidHex = (v) => /^#[0-9a-fA-F]{6}$/.test(v);
+  const previewColor = isValidHex(form.primary_color) ? form.primary_color : 'var(--accent)';
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
@@ -810,10 +815,11 @@ export default function Settings() {
                 Logo
               </h2>
               <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+                {/* #6 — more padding inside logo preview so it breathes */}
                 <div style={{
-                  width: 100, height: 60, borderRadius: 8, border: '1px solid var(--border)',
+                  width: 120, borderRadius: 8, border: '1px solid var(--border)',
                   background: 'var(--bg-card)', display: 'flex', alignItems: 'center',
-                  justifyContent: 'center', overflow: 'hidden', padding: 8,
+                  justifyContent: 'center', overflow: 'hidden', padding: '20px 24px',
                 }}>
                   <BrandLogo height={36} />
                 </div>
@@ -878,16 +884,20 @@ export default function Settings() {
                   </div>
                   <div style={fieldStyle}>
                     <label style={labelStyle}>Primary colour</label>
-                    <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                    {/* #4 — swatch embedded inside the left edge of the text input */}
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                       <input
                         type="color"
-                        value={form.primary_color}
+                        value={isValidHex(form.primary_color) ? form.primary_color : '#38bdf8'}
                         onChange={set('primary_color')}
-                        style={{ width: 44, height: 44, borderRadius: 8, border: '1px solid var(--border)',
-                          padding: 2, background: 'var(--bg)', cursor: 'pointer' }}
+                        style={{
+                          position: 'absolute', left: 10, width: 24, height: 24,
+                          padding: 0, border: 'none', borderRadius: 4,
+                          cursor: 'pointer', background: 'none',
+                        }}
                       />
                       <input
-                        style={{ ...inputStyle, fontFamily: 'DM Mono, monospace', fontSize: '0.82rem' }}
+                        style={{ ...inputStyle, paddingLeft: 44, fontFamily: 'DM Mono, monospace', fontSize: '0.82rem' }}
                         value={form.primary_color}
                         onChange={set('primary_color')}
                         placeholder="#c8102e"
@@ -927,7 +937,8 @@ export default function Settings() {
               </section>
 
               {/* ── Live preview ── */}
-              <section style={{ marginBottom: 40 }}>
+              {/* #3 — section divider */}
+              <section style={{ marginBottom: 40, borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 32 }}>
                 <h2 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: 16, color: 'var(--text)' }}>
                   Share-page preview
                 </h2>
@@ -935,11 +946,12 @@ export default function Settings() {
                   border: '1px solid var(--border)', borderRadius: 12,
                   padding: '20px 24px', background: 'var(--bg-card)',
                 }}>
+                  {/* #7 — header border and accent text driven by form.primary_color live */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    borderBottom: '1px solid var(--border)', paddingBottom: 16, marginBottom: 16 }}>
+                    borderBottom: `2px solid ${previewColor}`, paddingBottom: 16, marginBottom: 16 }}>
                     <BrandLogo height={24} />
-                    <span style={{ fontSize: '0.68rem', color: 'var(--muted)', letterSpacing: '0.08em',
-                      textTransform: 'uppercase' }}>
+                    <span style={{ fontSize: '0.68rem', color: previewColor, letterSpacing: '0.08em',
+                      textTransform: 'uppercase', fontWeight: 600 }}>
                       AI Visibility Report
                     </span>
                   </div>
@@ -954,7 +966,8 @@ export default function Settings() {
               </section>
 
               {/* ── Prospecting report settings ── */}
-              <section style={{ marginBottom: 40 }}>
+              {/* #3 — section divider */}
+              <section style={{ marginBottom: 40, borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 32 }}>
                 <h2 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: 4, color: 'var(--text)' }}>
                   Prospecting report
                 </h2>
@@ -1025,8 +1038,9 @@ export default function Settings() {
               )}
 
               <div className="save-row" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                {/* #8 — more padding, taller */}
                 <button type="submit" disabled={saving} style={{
-                  padding: '10px 28px', borderRadius: 8, fontSize: '0.88rem',
+                  padding: '13px 40px', borderRadius: 8, fontSize: '0.88rem',
                   background: 'var(--accent)', border: 'none', color: 'var(--bg)',
                   fontWeight: 700, cursor: 'pointer', fontFamily: 'DM Mono, monospace',
                   opacity: saving ? 0.6 : 1,
