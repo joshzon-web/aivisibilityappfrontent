@@ -168,6 +168,9 @@ export default function ScanResult({ publicMode = false }) {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
   const [tab, setTab] = useState('overview');
+  const [seenRecs, setSeenRecs] = useState(() =>
+    id ? localStorage.getItem(`recs_seen_${id}`) === '1' : false
+  );
   const [expandedPrompt, setExpandedPrompt] = useState(null);
 
   // Share modal state (private mode only)
@@ -477,16 +480,24 @@ const perplexityTotal = perplexityChecks.length;
 
         <div className={styles.tabs + ' fade-up-1'}>
           {['overview', 'prompts', 'competitors', 'reviews', 'sources', 'recommendations', 'report'].map(t => {
-            const highCount = t === 'recommendations' ? recommendations.filter(r => r.priority === 'high').length : 0;
+            const showDot = t === 'recommendations'
+              && !seenRecs
+              && recommendations.filter(r => r.priority === 'high').length > 0;
             return (
               <button
                 key={t}
                 className={styles.tab + (tab === t ? ' ' + styles.tabActive : '')}
-                onClick={() => setTab(t)}
+                onClick={() => {
+                  setTab(t);
+                  if (t === 'recommendations' && !seenRecs) {
+                    setSeenRecs(true);
+                    if (id) localStorage.setItem(`recs_seen_${id}`, '1');
+                  }
+                }}
                 style={{ position: 'relative' }}
               >
                 {t.charAt(0).toUpperCase() + t.slice(1)}
-                {highCount > 0 && (
+                {showDot && (
                   <span style={{
                     position: 'absolute', top: '4px', right: '4px',
                     width: '7px', height: '7px', borderRadius: '50%',
