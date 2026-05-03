@@ -278,18 +278,17 @@ export default function Dashboard() {
               {[1, 2, 3].map(i => <div key={i} className={styles.skeletonCard} />)}
             </div>
           ) : loadError ? (
-            <EmptyState icon="⚠" title="Couldn't load clients"
+            <EmptyState title="Couldn't load clients"
               subtitle="Check your connection and try again."
               action={{ label: 'Try again', onClick: loadData }} />
           ) : clients.length === 0 && !showNew ? (
             <EmptyState
-              icon="📁"
               title="No clients yet"
               subtitle="Add your first client to start tracking their AI visibility."
               action={{ label: '+ Add client', onClick: () => setShowNew(true) }}
             />
           ) : filteredClients.length === 0 ? (
-            <EmptyState icon="🔍" title="No clients match"
+            <EmptyState title="No clients match"
               action={{ label: 'Clear search', onClick: () => setSearch('') }} />
           ) : (
             <div className={styles.grid}>

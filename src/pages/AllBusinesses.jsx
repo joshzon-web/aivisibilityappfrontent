@@ -176,11 +176,11 @@ export default function AllBusinesses() {
                   {[1, 2, 3].map(i => <div key={i} className={styles.skeletonCard} />)}
                 </div>
               ) : loadError ? (
-                <EmptyState icon="⚠" title="Couldn't load businesses"
+                <EmptyState title="Couldn't load businesses"
                   subtitle="Check your connection and try again."
                   action={{ label: 'Try again', onClick: loadData }} />
               ) : businesses.length === 0 ? (
-                <EmptyState icon="◈" title="No businesses tracked yet"
+                <EmptyState title="No businesses tracked yet"
                   subtitle="Go to a client and track their first business."
                   action={{ label: '← Back to clients', onClick: () => navigate('/dashboard') }} />
               ) : (
@@ -218,7 +218,7 @@ export default function AllBusinesses() {
                   </div>
 
                   {filtered.length === 0 ? (
-                    <EmptyState icon="🔍" title="No businesses match"
+                    <EmptyState title="No businesses match"
                       action={{ label: 'Clear filters', onClick: () => { setSearch(''); setFilter('all'); } }} />
                   ) : (
                     <div className={styles.grid}>
