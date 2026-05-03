@@ -124,4 +124,11 @@ a { text-decoration: none; color: inherit; }
   #crisp-chatbox { display: none !important; }
 
   .mobile-only { display: block; }
+
+  /* Settings save button row: centred with breathing room on mobile */
+  .save-row {
+    justify-content: center !important;
+    margin-top: 32px !important;
+    margin-bottom: 24px !important;
+  }
 }

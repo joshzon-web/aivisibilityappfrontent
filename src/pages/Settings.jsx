@@ -1024,7 +1024,7 @@ export default function Settings() {
                 </div>
               )}
 
-              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+              <div className="save-row" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                 <button type="submit" disabled={saving} style={{
                   padding: '10px 28px', borderRadius: 8, fontSize: '0.88rem',
                   background: 'var(--accent)', border: 'none', color: 'var(--bg)',

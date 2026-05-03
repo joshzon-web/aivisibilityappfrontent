@@ -347,7 +347,13 @@
     overflow-x: hidden;
   }
   .summaryRow { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .scanBtn { white-space: normal; }
+  /* Header right-side button group: full width, stacked on mobile */
+  .header > div:last-child {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .scanBtn { white-space: normal; width: 100%; }
   .historyRow { flex-wrap: wrap; gap: 6px; }
   .historyDate { min-width: 0; flex: 1 1 auto; font-size: 0.75rem; }
   .historyScore { min-width: 0; }
