@@ -158,7 +158,8 @@ export default function Business() {
     if (pdfLoading) return;
     setPdfLoading(true);
     try {
-      const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
+      const API_URL = process.env.REACT_APP_API_URL
+        || (process.env.NODE_ENV === 'development' ? 'http://127.0.0.1:8000' : '');
       const token = localStorage.getItem('token') || '';
       const res = await fetch(`${API_URL}/businesses/${id}/report.pdf?token=${token}`);
       if (!res.ok) {
@@ -525,6 +526,7 @@ export default function Business() {
             </div>
           )}
         </div>
+
       </main>
 
       {/* Edit area modal */}

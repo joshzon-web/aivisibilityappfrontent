@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
+const API_URL = process.env.REACT_APP_API_URL
+  || (process.env.NODE_ENV === 'development' ? 'http://127.0.0.1:8000' : '');
 
 const api = axios.create({ baseURL: API_URL });
 
@@ -121,6 +122,14 @@ export const getShareInfo    = (id) => api.get(`/scans/${id}/share`);
 export const createShareLink = (id) => api.post(`/scans/${id}/share`);
 export const extendShareLink = (id) => api.post(`/scans/${id}/share/extend`);
 export const revokeShareLink = (id) => api.delete(`/scans/${id}/share`);
+
+// Business actions (agency activity log)
+export const getBusinessActions = (bizId) =>
+  api.get(`/businesses/${bizId}/actions`);
+export const createBusinessAction = (bizId, action_text, category) =>
+  api.post(`/businesses/${bizId}/actions`, { action_text, category });
+export const deleteBusinessAction = (bizId, actionId) =>
+  api.delete(`/businesses/${bizId}/actions/${actionId}`);
 
 // Clients (agency folders)
 export const listClients = () => api.get('/clients');

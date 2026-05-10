@@ -9,6 +9,14 @@ import MobileNav from '../components/MobileNav';
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell, LabelList } from 'recharts';
 import styles from './ScanResult.module.css';
 
+// Domains that are infrastructure/tool noise — never shown as meaningful platforms
+const NOISE_DOMAINS = new Set([
+  'vertexaisearch.cloud.google.com', 'accounts.google.com',
+  'play.google.com', 'support.google.com', 'developers.google.com',
+  'openai.com', 'chat.openai.com', 'gemini.google.com', 'bard.google.com',
+  'perplexity.ai', 'anthropic.com', 'schema.org', 'w3.org',
+]);
+
 // ── Recommendation engine ─────────────────────────────────────────────────────
 // Pure function — takes scan data, returns sorted array of action items.
 function buildRecommendations(result, ownMentions, totalPrompts, categoryMap) {
@@ -138,20 +146,13 @@ function buildRecommendations(result, ownMentions, totalPrompts, categoryMap) {
     });
   }
 
-  // 9 · Platform gap analysis — uses enriched top_sources fields
+  // 9 · Platform gap analysis
   if (result.top_sources && result.top_sources.length > 0) {
-    const REC_NOISE = new Set([
-      'vertexaisearch.cloud.google.com', 'accounts.google.com',
-      'play.google.com', 'support.google.com', 'developers.google.com',
-      'openai.com', 'chat.openai.com', 'gemini.google.com', 'bard.google.com',
-      'perplexity.ai', 'anthropic.com', 'schema.org', 'w3.org',
-    ]);
-    const cleanSources  = result.top_sources.filter(s => !REC_NOISE.has(s.domain));
+    const cleanSources  = result.top_sources.filter(s => !NOISE_DOMAINS.has(s.domain));
     const platforms     = cleanSources.filter(s => s.type !== 'competitor_website');
     const compSites     = cleanSources.filter(s => s.type === 'competitor_website');
-    const enriched      = platforms.some(s => s.target_presence_band);
 
-    if (enriched) {
+    if (platforms.length > 0) {
       // Platforms where competitors win and the business is absent/weak — highest signal
       const competitorWins = platforms
         .filter(s => (s.competitor_featured_count || 0) > 0 && s.target_presence_band !== 'strong' && s.target_presence_band !== 'present')
@@ -207,15 +208,6 @@ function buildRecommendations(result, ownMentions, totalPrompts, categoryMap) {
           category: 'Platforms',
         });
       }
-    } else {
-      // Old scan or fallback — generic card without enriched signal
-      const top3 = platforms.slice(0, 3).map(s => s.label || s.domain).join(', ');
-      recs.push({
-        priority: 'medium',
-        title: 'Key platforms shaping AI recommendations',
-        detail: `AI most often cites ${top3 || 'these platforms'} for "${result.search_term}" queries. Run a fresh scan to see which ones feature your business and where competitors are winning.`,
-        category: 'Platforms',
-      });
     }
   }
 
@@ -240,7 +232,6 @@ const ENGINE_PILL_CONFIG = {
 function SourceCard({ s, maxCount }) {
   const widthPct      = Math.round((s.count / maxCount) * 100);
   const pc            = PRESENCE_CONFIG[s.target_presence_band] || PRESENCE_CONFIG.unclear;
-  const hasNew        = !!s.target_presence_band;
   const isCompetitor  = s.type === 'competitor_website';
   const compFeat      = s.competitor_featured_count || 0;
 
@@ -314,7 +305,7 @@ function SourceCard({ s, maxCount }) {
           <span style={{ fontSize: '0.72rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>
             {s.count}× cited
           </span>
-          {hasNew && isCompetitor ? (
+          {isCompetitor ? (
             <span style={{
               fontSize: '0.68rem', padding: '2px 8px', borderRadius: 999,
               background: 'rgba(245,158,11,0.12)', color: 'var(--orange)', fontWeight: 600,
@@ -322,7 +313,7 @@ function SourceCard({ s, maxCount }) {
             }}>
               Competitor site
             </span>
-          ) : hasNew ? (
+          ) : (
             <span style={{
               fontSize: '0.68rem', padding: '2px 8px', borderRadius: 999,
               background: `${pc.colour}18`, color: pc.colour, fontWeight: 600,
@@ -330,7 +321,7 @@ function SourceCard({ s, maxCount }) {
             }}>
               {pc.label}
             </span>
-          ) : null}
+          )}
           {/* Competitor wins badge — shown on non-competitor-website platforms where competitors dominate */}
           {!isCompetitor && compFeat > 0 && s.target_presence_band !== 'strong' && (
             <span style={{
@@ -343,7 +334,7 @@ function SourceCard({ s, maxCount }) {
       </div>
 
       {/* Actions row */}
-      {hasNew && s.actions && s.actions.length > 0 && (
+      {s.actions && s.actions.length > 0 && (
         <div style={{ borderTop: '1px solid var(--border)', padding: '10px 18px' }}>
           <div style={{ fontSize: '0.76rem', color: 'var(--muted)' }}>
             <span style={{ color: isCompetitor ? 'var(--orange)' : 'var(--accent)', fontWeight: 600 }}>→ </span>
@@ -487,7 +478,8 @@ export default function ScanResult({ publicMode = false }) {
     if (pdfLoading) return;
     setPdfLoading(true);
     try {
-      const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
+      const API_URL = process.env.REACT_APP_API_URL
+        || (process.env.NODE_ENV === 'development' ? 'http://127.0.0.1:8000' : '');
       const token = localStorage.getItem('token') || '';
       // Use the business endpoint so we get the client monthly report (not the sales PDF).
       // scan.business_id is available after the scan loads — fall back to scan endpoint if missing.
@@ -1071,22 +1063,16 @@ const perplexityTotal = perplexityChecks.length;
                 </p>
               </div>
             ) : (() => {
-              const NOISE_DOMAINS = new Set([
-                'vertexaisearch.cloud.google.com', 'accounts.google.com',
-                'play.google.com', 'support.google.com', 'developers.google.com',
-                'openai.com', 'chat.openai.com', 'gemini.google.com', 'bard.google.com',
-                'perplexity.ai', 'anthropic.com', 'schema.org', 'w3.org',
-              ]);
               const sources           = result.top_sources.filter(s => !NOISE_DOMAINS.has(s.domain));
-              const maxCount          = Math.max(...sources.map(s => s.count));
-              const enriched          = sources.some(s => s.target_presence_band);
-              const platformSources   = sources.filter(s => s.type !== 'competitor_website');
-              // Sort competitor sites by competitor_featured_count desc — most impactful first
-              const competitorSources = sources
+              // Split: LLM-extracted (ChatGPT/Gemini explicit mentions) vs Perplexity native citations
+              const llmSources        = sources.filter(s => !s.perplexity_native);
+              const plxSources        = sources.filter(s => s.perplexity_native);
+              const maxCount          = Math.max(...sources.map(s => s.count), 1);
+              const platformSources   = llmSources.filter(s => s.type !== 'competitor_website');
+              const competitorSources = llmSources
                 .filter(s => s.type === 'competitor_website')
                 .sort((a, b) => (b.competitor_featured_count || 0) - (a.competitor_featured_count || 0));
               const featuredCnt       = platformSources.filter(s => s.target_presence_band === 'strong' || s.target_presence_band === 'present').length;
-              // Platforms where competitors dominate and the business is absent/weak
               const gapCnt            = platformSources.filter(s =>
                 (s.competitor_featured_count || 0) > 0 &&
                 s.target_presence_band !== 'strong' && s.target_presence_band !== 'present'
@@ -1094,104 +1080,171 @@ const perplexityTotal = perplexityChecks.length;
 
               return (
                 <>
-                  {/* Summary strip */}
-                  <div style={{
-                    display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '20px',
-                  }}>
-                    <div style={{
-                      flex: 1, minWidth: 140,
-                      background: 'var(--bg-card)', border: '1px solid var(--border)',
-                      borderRadius: 10, padding: '14px 18px',
-                    }}>
-                      <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text)', fontFamily: 'Syne, sans-serif' }}>
-                        {platformSources.length}
-                      </div>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--muted)', marginTop: 2 }}>
-                        platforms cited by AI
-                      </div>
-                    </div>
-                    {enriched && (
-                      <div style={{
-                        flex: 1, minWidth: 140,
-                        background: 'var(--bg-card)', border: '1px solid var(--border)',
-                        borderRadius: 10, padding: '14px 18px',
-                      }}>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 700, color: featuredCnt > 0 ? 'var(--accent2)' : 'var(--red)', fontFamily: 'Syne, sans-serif' }}>
-                          {featuredCnt}
-                        </div>
-                        <div style={{ fontSize: '0.78rem', color: 'var(--muted)', marginTop: 2 }}>
-                          platforms featuring your business
-                        </div>
-                      </div>
-                    )}
-                    {enriched && (
-                      <div style={{
-                        flex: 1, minWidth: 140,
-                        background: 'var(--bg-card)', border: '1px solid var(--border)',
-                        borderRadius: 10, padding: '14px 18px',
-                      }}>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--orange)', fontFamily: 'Syne, sans-serif' }}>
-                          {platformSources.length - featuredCnt}
-                        </div>
-                        <div style={{ fontSize: '0.78rem', color: 'var(--muted)', marginTop: 2 }}>
-                          platforms where you're missing
-                        </div>
-                      </div>
-                    )}
-                    {enriched && gapCnt > 0 && (
-                      <div style={{
-                        flex: 1, minWidth: 140,
-                        background: 'var(--bg-card)', border: '1px solid rgba(245,158,11,0.3)',
-                        borderRadius: 10, padding: '14px 18px',
-                      }}>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--orange)', fontFamily: 'Syne, sans-serif' }}>
-                          {gapCnt}
-                        </div>
-                        <div style={{ fontSize: '0.78rem', color: 'var(--muted)', marginTop: 2 }}>
-                          platforms competitors win
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <p style={{ fontSize: '0.85rem', color: 'var(--muted)', lineHeight: 1.6, marginBottom: '8px' }}>
-                    {enriched
-                      ? 'These are the platforms AI searches when forming recommendations in your space. Presence is inferred from AI responses — not a verified check of your listings.'
-                      : 'These are the websites AI cited across your prompts. Run a fresh scan to see which ones feature your business.'}
-                  </p>
-
-                  {/* Platforms you can improve */}
+                  {/* Summary strip + description — only when we have LLM-extracted platforms */}
                   {platformSources.length > 0 && (
+                    <>
+                      <div style={{
+                        display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '20px',
+                      }}>
+                        <div style={{
+                          flex: 1, minWidth: 140,
+                          background: 'var(--bg-card)', border: '1px solid var(--border)',
+                          borderRadius: 10, padding: '14px 18px',
+                        }}>
+                          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text)', fontFamily: 'Syne, sans-serif' }}>
+                            {platformSources.length}
+                          </div>
+                          <div style={{ fontSize: '0.78rem', color: 'var(--muted)', marginTop: 2 }}>
+                            platforms cited by AI
+                          </div>
+                        </div>
+                        <div style={{
+                          flex: 1, minWidth: 140,
+                          background: 'var(--bg-card)', border: '1px solid var(--border)',
+                          borderRadius: 10, padding: '14px 18px',
+                        }}>
+                          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: featuredCnt > 0 ? 'var(--accent2)' : 'var(--red)', fontFamily: 'Syne, sans-serif' }}>
+                            {featuredCnt}
+                          </div>
+                          <div style={{ fontSize: '0.78rem', color: 'var(--muted)', marginTop: 2 }}>
+                            platforms featuring your business
+                          </div>
+                        </div>
+                        <div style={{
+                          flex: 1, minWidth: 140,
+                          background: 'var(--bg-card)', border: '1px solid var(--border)',
+                          borderRadius: 10, padding: '14px 18px',
+                        }}>
+                          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--orange)', fontFamily: 'Syne, sans-serif' }}>
+                            {platformSources.length - featuredCnt}
+                          </div>
+                          <div style={{ fontSize: '0.78rem', color: 'var(--muted)', marginTop: 2 }}>
+                            platforms where you're missing
+                          </div>
+                        </div>
+                        {gapCnt > 0 && (
+                          <div style={{
+                            flex: 1, minWidth: 140,
+                            background: 'var(--bg-card)', border: '1px solid rgba(245,158,11,0.3)',
+                            borderRadius: 10, padding: '14px 18px',
+                          }}>
+                            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--orange)', fontFamily: 'Syne, sans-serif' }}>
+                              {gapCnt}
+                            </div>
+                            <div style={{ fontSize: '0.78rem', color: 'var(--muted)', marginTop: 2 }}>
+                              platforms competitors win
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <p style={{ fontSize: '0.75rem', color: 'var(--muted)', lineHeight: 1.6, marginBottom: '12px' }}>
+                        Platforms AI explicitly mentions when recommending businesses in your space. Presence is inferred from AI responses — not a verified check of your listings.
+                      </p>
+                    </>
+                  )}
+
+                  {/* Main platform grid — LLM-extracted only */}
+                  {platformSources.length > 0 ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       {platformSources.map(s => (
-                        <SourceCard
-                          key={s.domain}
-                          s={s}
-                          maxCount={maxCount}
-                        />
+                        <SourceCard key={s.domain} s={s} maxCount={maxCount} />
                       ))}
+                    </div>
+                  ) : (
+                    <div style={{
+                      padding: '20px 24px', borderRadius: 10,
+                      background: 'var(--bg-card)', border: '1px solid var(--border)',
+                      marginBottom: 20,
+                    }}>
+                      <div style={{
+                        fontSize: '0.8rem', fontWeight: 700, color: 'var(--text)',
+                        textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6,
+                      }}>
+                        No platforms named by ChatGPT or Gemini
+                      </div>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--muted)', lineHeight: 1.5, margin: 0 }}>
+                        Neither engine explicitly named a review site, directory, or guide when answering queries about your business. The Perplexity citations below show which sites are influential in your space and worth getting listed on.
+                      </p>
                     </div>
                   )}
 
-                  {/* Competitor content — separate section */}
+                  {/* Competitor websites */}
                   {competitorSources.length > 0 && (
-                    <div style={{ marginTop: platformSources.length > 0 ? 28 : 0 }}>
+                    <div style={{ marginTop: 28, paddingTop: 24, borderTop: '1px solid var(--border)' }}>
                       <div style={{
-                        fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)',
-                        textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10,
+                        fontSize: '0.8rem', fontWeight: 700, color: 'var(--text)',
+                        textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8,
                       }}>
                         Competitor content advantage
                       </div>
-                      <p style={{ fontSize: '0.8rem', color: 'var(--muted)', lineHeight: 1.5, marginBottom: 12 }}>
-                        AI is citing competitor websites as sources — this suggests their site content, service pages, or local signals are influencing recommendations. You can't edit these sites, but you can benchmark against them.
+                      <p style={{ fontSize: '0.75rem', color: 'var(--muted)', lineHeight: 1.5, marginBottom: 12 }}>
+                        AI is citing competitor websites as sources. Their content, service pages, or local signals are influencing recommendations. You can't edit these, but you can benchmark against them.
                       </p>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         {competitorSources.map(s => (
-                          <SourceCard
-                            key={s.domain}
-                            s={s}
-                            maxCount={maxCount}
-                          />
+                          <SourceCard key={s.domain} s={s} maxCount={maxCount} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Perplexity source citations — separate section */}
+                  {plxSources.length > 0 && (
+                    <div style={{ marginTop: 28, paddingTop: 24, borderTop: '1px solid var(--border)' }}>
+                      <div style={{
+                        fontSize: '0.8rem', fontWeight: 700, color: 'var(--text)',
+                        textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8,
+                      }}>
+                        Perplexity source citations
+                      </div>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--muted)', lineHeight: 1.5, marginBottom: 12 }}>
+                        Web pages Perplexity reads when forming answers in your space. Your own site appearing here means Perplexity is reading it directly.
+                      </p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {plxSources.map(s => (
+                          <div key={s.domain} style={{
+                            background: 'var(--bg-card)', border: '1px solid var(--border)',
+                            borderRadius: 10, overflow: 'hidden',
+                          }}>
+                            <div style={{ padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                              <img
+                                src={`https://www.google.com/s2/favicons?domain=${s.domain}&sz=32`}
+                                alt="" width={20} height={20}
+                                style={{ borderRadius: 4, flexShrink: 0 }}
+                                onError={e => { e.target.style.display = 'none'; }}
+                              />
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                                  <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text)' }}>
+                                    {s.label || s.domain.split('.')[0].charAt(0).toUpperCase() + s.domain.split('.')[0].slice(1)}
+                                  </span>
+                                  <a href={`https://${s.domain}`} target="_blank" rel="noopener noreferrer"
+                                    style={{ fontSize: '0.75rem', color: 'var(--muted)', textDecoration: 'none' }}>
+                                    ↗ {s.domain}
+                                  </a>
+                                </div>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                                <span style={{
+                                  fontSize: '0.68rem', padding: '2px 7px', borderRadius: 999,
+                                  background: 'rgba(29,158,117,0.12)', color: 'var(--accent2)',
+                                  fontWeight: 700, border: '1px solid rgba(29,158,117,0.25)',
+                                }}>Plx</span>
+                                <span style={{ fontSize: '0.72rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>
+                                  {s.count}× cited
+                                </span>
+                              </div>
+                            </div>
+                            {s.actions && s.actions.length > 0 && (
+                              <div style={{ borderTop: '1px solid var(--border)', padding: '8px 18px' }}>
+                                <div style={{ fontSize: '0.76rem', color: 'var(--muted)' }}>
+                                  <span style={{ color: 'var(--accent)', fontWeight: 600 }}>→ </span>
+                                  {s.actions[0]}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         ))}
                       </div>
                     </div>
