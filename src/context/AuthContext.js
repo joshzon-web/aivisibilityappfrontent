@@ -29,6 +29,7 @@ export function AuthProvider({ children }) {
   // on refresh instead of waiting for getMe() to round-trip.
   const [user, setUser] = useState(readStoredUser);
   const [brand, setBrand] = useState(DEFAULT_BRAND);
+  const [brandLoading, setBrandLoading] = useState(() => !!localStorage.getItem('token'));
 
   // Only block rendering if we have a token but no cached user object yet
   // (i.e. the very first login ever on this device).
@@ -44,6 +45,8 @@ export function AuthProvider({ children }) {
       setBrand({ ...DEFAULT_BRAND, ...res.data });
     } catch {
       setBrand(DEFAULT_BRAND);
+    } finally {
+      setBrandLoading(false);
     }
   }, []);
 
@@ -115,7 +118,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, loginUser, logoutUser, brand, refreshBrand, updateUser }}>
+    <AuthContext.Provider value={{ user, loading, loginUser, logoutUser, brand, brandLoading, refreshBrand, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

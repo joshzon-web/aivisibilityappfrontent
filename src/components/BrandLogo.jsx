@@ -18,6 +18,12 @@ export default function BrandLogo({ height = 28, style = {}, publicBrand, onClic
   const auth = useAuth();
   // publicBrand wins over auth context for share pages
   const brand = publicBrand || auth?.brand || {};
+  const brandLoading = !publicBrand && auth?.brandLoading;
+
+  // Hold space while brand fetch is in-flight to avoid flashing the default logo
+  if (brandLoading) {
+    return <div style={{ height, width: height * 3, ...style }} />;
+  }
 
   const src  = brand.logo_url  || '/lokscope-logo.png';
   const name = brand.brand_name || 'Lokscope';
