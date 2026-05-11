@@ -122,7 +122,9 @@ export default function Prospecting() {
     setPdfLoading(true);
     try {
       const token = localStorage.getItem('token') || '';
-      const res = await fetch(`${API_URL}/scans/${scanResult.scan_id}/report.pdf?token=${token}`);
+      const res = await fetch(`${API_URL}/scans/${scanResult.scan_id}/report.pdf`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (!res.ok) {
         const err = await res.json().catch(() => ({ detail: `Error ${res.status}` }));
         alert(`Could not download report: ${err.detail || res.status}`);

@@ -161,7 +161,9 @@ export default function Business() {
       const API_URL = process.env.REACT_APP_API_URL
         || (process.env.NODE_ENV === 'development' ? 'http://127.0.0.1:8000' : '');
       const token = localStorage.getItem('token') || '';
-      const res = await fetch(`${API_URL}/businesses/${id}/report.pdf?token=${token}`);
+      const res = await fetch(`${API_URL}/businesses/${id}/report.pdf`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (!res.ok) {
         const err = await res.json().catch(() => ({ detail: `Error ${res.status}` }));
         alert(`Could not download report: ${err.detail || res.status}`);

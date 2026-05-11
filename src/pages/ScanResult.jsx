@@ -140,8 +140,8 @@ function buildRecommendations(result, ownMentions, totalPrompts, categoryMap) {
   if (near) {
     recs.push({
       priority: 'low',
-      title: `Just ${near.needed} reviews away from ${near.target}★`,
-      detail: `You're ${near.needed} five-star reviews away from hitting ${near.target}★ — a quick win. Send a review request to your happiest recent customers today.`,
+      title: `${near.needed} reviews away from ${near.target}★`,
+      detail: `${near.needed} five-star reviews would lift this business's Google rating to ${near.target}★. Higher ratings correlate with more frequent AI recommendations.`,
       category: 'Reviews',
     });
   }
@@ -149,8 +149,31 @@ function buildRecommendations(result, ownMentions, totalPrompts, categoryMap) {
   // 9 · Platform gap analysis
   if (result.top_sources && result.top_sources.length > 0) {
     const cleanSources  = result.top_sources.filter(s => !NOISE_DOMAINS.has(s.domain));
-    const platforms     = cleanSources.filter(s => s.type !== 'competitor_website');
-    const compSites     = cleanSources.filter(s => s.type === 'competitor_website');
+    // True directories/listings the business can be present on (TripAdvisor, Yelp, etc.)
+    const platforms     = cleanSources.filter(s =>
+      s.type !== 'competitor_website' &&
+      s.type !== 'perplexity_external' &&
+      s.type !== 'own_website'
+    );
+    // Sites AI uses but they're businesses/external sources, not platforms to list on
+    const compSites     = cleanSources.filter(s =>
+      s.type === 'competitor_website' || s.type === 'perplexity_external'
+    );
+    // Business's own website — surfaces as positive signal if cited
+    const ownSites      = cleanSources.filter(s => s.type === 'own_website');
+
+    // Positive: own website is being read directly by AI (high authority signal)
+    if (ownSites.length > 0) {
+      const totalOwnCites = ownSites.reduce((sum, s) => sum + (s.count || 0), 0);
+      if (totalOwnCites >= 2) {
+        recs.push({
+          priority: 'low',
+          title: 'AI reads this business\'s own website directly',
+          detail: `AI engines cited the business's own site ${totalOwnCites} time${totalOwnCites !== 1 ? 's' : ''} when answering "${result.search_term}" queries. Content on the site directly shapes how AI describes the business — a strong signal currently working in this business's favour.`,
+          category: 'Platforms',
+        });
+      }
+    }
 
     if (platforms.length > 0) {
       // Platforms where competitors win and the business is absent/weak — highest signal
@@ -164,8 +187,8 @@ function buildRecommendations(result, ownMentions, totalPrompts, categoryMap) {
         const snippetNote = top.evidence_snippet ? ` — "${top.evidence_snippet}"` : '';
         recs.push({
           priority: 'high',
-          title: `Competitors are winning on ${top.label || top.domain}`,
-          detail: `${top.label || top.domain} was cited ${top.count} time${top.count !== 1 ? 's' : ''} by AI${snippetNote}, but your business wasn't featured while competitors were (${top.competitor_featured_count} time${top.competitor_featured_count !== 1 ? 's' : ''}). Claim or strengthen your listing here — this is directly influencing recommendations.${otherCount > 0 ? ` Same gap exists on ${otherCount} other platform${otherCount !== 1 ? 's' : ''}.` : ''}`,
+          title: `AI surfaces competitors on ${top.label || top.domain}, not this business`,
+          detail: `${top.label || top.domain} was cited ${top.count} time${top.count !== 1 ? 's' : ''} by AI when answering "${result.search_term}" queries${snippetNote}. In ${top.competitor_featured_count} of those response${top.competitor_featured_count !== 1 ? 's' : ''}, AI named a competitor on this platform but did not name your business. The listing may exist but isn't strong enough to surface in AI recommendations.${otherCount > 0 ? ` Same pattern on ${otherCount} other platform${otherCount !== 1 ? 's' : ''}.` : ''}`,
           category: 'Platforms',
         });
       }
@@ -180,19 +203,21 @@ function buildRecommendations(result, ownMentions, totalPrompts, categoryMap) {
         const names = silentGaps.slice(0, 2).map(s => s.label || s.domain).join(' and ');
         recs.push({
           priority: 'medium',
-          title: `Not featured on ${silentGaps.length === 1 ? names : `${silentGaps.length} cited platforms`}`,
-          detail: `AI cites ${names}${silentGaps.length > 2 ? ' and others' : ''} for "${result.search_term}" queries but your business isn't appearing there. Getting listed increases the chance of being included in AI recommendations.`,
+          title: `AI cites ${silentGaps.length === 1 ? names : `${silentGaps.length} platforms`} but doesn't surface this business`,
+          detail: `AI engines reference ${names}${silentGaps.length > 2 ? ' and others' : ''} when answering "${result.search_term}" queries in this area, but did not include this business in those responses. The business may be listed on these platforms; the listing isn't visible enough to AI yet. Worth reviewing presence and content strength on each.`,
           category: 'Platforms',
         });
       }
 
-      // Competitor website content advantage
+      // Competitor / external website content advantage
       if (compSites.length > 0) {
-        const mostCited = compSites.sort((a, b) => (b.competitor_featured_count || 0) - (a.competitor_featured_count || 0))[0];
+        const totalCompCites = compSites.reduce((sum, s) => sum + (s.count || 0), 0);
+        const mostCited = compSites.sort((a, b) => (b.count || 0) - (a.count || 0))[0];
+        const topNames = compSites.slice(0, 3).map(s => s.label || s.domain).join(', ');
         recs.push({
           priority: 'medium',
-          title: 'Competitor website content is influencing AI',
-          detail: `${compSites.length === 1 ? `${mostCited.label || mostCited.domain} is` : `${compSites.length} competitor websites are`} being cited as sources by AI engines. This means their site content — service pages, location details, FAQs — is shaping recommendations. Audit your own site against theirs and add structured content they're missing.`,
+          title: 'AI reads other businesses\' websites directly in this space',
+          detail: `${compSites.length} other business website${compSites.length !== 1 ? 's' : ''} (${topNames}${compSites.length > 3 ? ' and more' : ''}) ${compSites.length === 1 ? 'is' : 'are'} cited directly by AI engines when answering "${result.search_term}" queries — ${totalCompCites} citations in total. AI relies on individual business websites in this space rather than only directories, meaning on-page content is a major influence on the recommendations AI gives.`,
           category: 'Platforms',
         });
       }
@@ -203,8 +228,8 @@ function buildRecommendations(result, ownMentions, totalPrompts, categoryMap) {
         const names = winning.slice(0, 2).map(s => s.label || s.domain).join(' and ');
         recs.push({
           priority: 'low',
-          title: `Keep ${names} listings fresh`,
-          detail: `AI is featuring your business on ${winning.length === 1 ? names : `${winning.length} platforms including ${names}`}. Keep these listings accurate and up to date — stale data can cause AI engines to drop or downrank you.`,
+          title: `AI consistently surfaces this business on ${names}`,
+          detail: `AI engines are featuring this business on ${winning.length === 1 ? names : `${winning.length} platforms including ${names}`} when answering "${result.search_term}" queries. These are the strongest signals currently working in this business's favour.`,
           category: 'Platforms',
         });
       }
@@ -485,9 +510,11 @@ export default function ScanResult({ publicMode = false }) {
       // scan.business_id is available after the scan loads — fall back to scan endpoint if missing.
       const bizId = scan?.business_id;
       const url_path = bizId
-        ? `${API_URL}/businesses/${bizId}/report.pdf?token=${token}`
-        : `${API_URL}/scans/${id}/report.pdf?token=${token}`;
-      const res = await fetch(url_path);
+        ? `${API_URL}/businesses/${bizId}/report.pdf`
+        : `${API_URL}/scans/${id}/report.pdf`;
+      const res = await fetch(url_path, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (!res.ok) {
         const err = await res.json().catch(() => ({ detail: `Error ${res.status}` }));
         alert(`Could not download report: ${err.detail || res.status}`);
@@ -671,7 +698,10 @@ const perplexityTotal = perplexityChecks.length;
         )}
 
         <div className={styles.tabs + ' fade-up-1'}>
-          {['overview', 'prompts', 'competitors', 'reviews', 'platforms', 'recommendations', 'report'].map(t => {
+          {(publicMode
+              ? ['overview', 'prompts', 'competitors', 'reviews', 'platforms', 'report']
+              : ['overview', 'prompts', 'competitors', 'reviews', 'platforms', 'recommendations', 'report']
+          ).map(t => {
             const showDot = t === 'recommendations'
               && !seenRecs
               && recommendations.filter(r => r.priority === 'high').length > 0;
@@ -1072,6 +1102,9 @@ const perplexityTotal = perplexityChecks.length;
               const competitorSources = llmSources
                 .filter(s => s.type === 'competitor_website')
                 .sort((a, b) => (b.competitor_featured_count || 0) - (a.competitor_featured_count || 0));
+              // Own-website citations — high-authority signal (AI reading the business's own site directly)
+              const ownSites          = sources.filter(s => s.type === 'own_website');
+              const ownSiteCount      = ownSites.reduce((sum, s) => sum + (s.count || 0), 0);
               const featuredCnt       = platformSources.filter(s => s.target_presence_band === 'strong' || s.target_presence_band === 'present').length;
               const gapCnt            = platformSources.filter(s =>
                 (s.competitor_featured_count || 0) > 0 &&
@@ -1080,6 +1113,26 @@ const perplexityTotal = perplexityChecks.length;
 
               return (
                 <>
+                  {/* Own-website citation badge — high-authority signal, render whenever AI cites the business's own site */}
+                  {ownSiteCount >= 1 && (
+                    <div style={{
+                      display: 'flex', alignItems: 'center', gap: 12,
+                      background: 'rgba(45, 138, 78, 0.08)',
+                      border: '1px solid rgba(45, 138, 78, 0.3)',
+                      borderRadius: 10, padding: '12px 18px', marginBottom: '16px',
+                    }}>
+                      <span style={{
+                        fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.08em',
+                        textTransform: 'uppercase', color: 'var(--accent2)',
+                        background: 'rgba(45, 138, 78, 0.15)',
+                        padding: '3px 8px', borderRadius: 4, whiteSpace: 'nowrap',
+                      }}>Your website</span>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--text)', lineHeight: 1.4 }}>
+                        Cited <strong style={{ color: 'var(--accent2)' }}>{ownSiteCount}×</strong> by AI when answering "{result.search_term}" queries — content here is shaping AI responses directly.
+                      </span>
+                    </div>
+                  )}
+
                   {/* Summary strip + description — only when we have LLM-extracted platforms */}
                   {platformSources.length > 0 && (
                     <>
@@ -1257,7 +1310,7 @@ const perplexityTotal = perplexityChecks.length;
         )}
 
         {/* Recommendations */}
-        {tab === 'recommendations' && (
+        {tab === 'recommendations' && !publicMode && (
           <div className={styles.tabContent + ' fade-up-2'}>
             {/* Summary line */}
             <div style={{ marginBottom: '24px' }}>
