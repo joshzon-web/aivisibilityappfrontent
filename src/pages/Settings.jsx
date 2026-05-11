@@ -746,7 +746,7 @@ export default function Settings() {
       });
       await refreshBrand();
     } catch (err) {
-      setUploadError(err.response?.data?.detail || 'Upload failed. Use PNG or SVG under 500 KB.');
+      setUploadError(err.response?.data?.detail || 'Upload failed. Use PNG or SVG under 2 MB.');
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = '';
@@ -817,11 +817,11 @@ export default function Settings() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
                 {/* #6 — more padding inside logo preview so it breathes */}
                 <div style={{
-                  width: 120, borderRadius: 8, border: '1px solid var(--border)',
+                  width: 160, borderRadius: 8, border: '1px solid var(--border)',
                   background: 'var(--bg-card)', display: 'flex', alignItems: 'center',
                   justifyContent: 'center', overflow: 'hidden', padding: '20px 24px',
                 }}>
-                  <BrandLogo height={36} />
+                  <BrandLogo height={56} />
                 </div>
                 <div>
                   <input
@@ -859,7 +859,7 @@ export default function Settings() {
                     </button>
                   )}
                   <p style={{ ...hintStyle, marginTop: 8 }}>
-                    PNG, SVG, JPEG or WebP. Max 500 KB. Displayed at 28 px height.
+                    PNG, SVG, JPEG or WebP. Max 2 MB. Displayed at 28 px height.
                   </p>
                   {uploadError && (
                     <p style={{ ...hintStyle, color: 'var(--red)', marginTop: 6 }}>{uploadError}</p>
