@@ -397,6 +397,13 @@ export default function ScanResult({ publicMode = false }) {
   const [pdfLoading, setPdfLoading] = useState(false);
 
   useEffect(() => {
+    if (publicMode && window.$crisp) {
+      window.$crisp.push(['do', 'chat:hide']);
+      return () => window.$crisp.push(['do', 'chat:show']);
+    }
+  }, [publicMode]);
+
+  useEffect(() => {
     const fetcher = publicMode
       ? getSharedScan(shareToken).then(data => ({ data }))
       : getScan(id);
