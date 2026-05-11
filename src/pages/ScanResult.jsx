@@ -212,7 +212,7 @@ function buildRecommendations(result, ownMentions, totalPrompts, categoryMap) {
       // Competitor / external website content advantage
       if (compSites.length > 0) {
         const totalCompCites = compSites.reduce((sum, s) => sum + (s.count || 0), 0);
-        const mostCited = compSites.sort((a, b) => (b.count || 0) - (a.count || 0))[0];
+        compSites.sort((a, b) => (b.count || 0) - (a.count || 0));
         const topNames = compSites.slice(0, 3).map(s => s.label || s.domain).join(', ');
         recs.push({
           priority: 'medium',
