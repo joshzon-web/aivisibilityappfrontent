@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { SCAN_STATUSES } from '../constants/scanStatuses';
-import { getBusinessScans, getBusiness, runScan, updateBusinessSchedule, deleteScan, getBusinessTerms, updateBusinessSearchLabel } from '../api/client';
+import { getBusinessScans, getBusiness, runScan, updateBusinessSchedule, deleteScan, getBusinessTerms, updateBusinessSearchLabel, updateBusinessAliases } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../components/ConfirmModal';
 import Sidebar from '../components/Sidebar';
@@ -130,6 +130,54 @@ export default function Business() {
     } catch {
       setError('Could not delete scan. Please try again.');
     }
+  };
+
+  // ── Aliases (a.k.a. "Also known as") ───────────────────────────────────────
+  // Names AI engines might use for this business that differ from its
+  // canonical Google listing. e.g. Google says "Kebab Palace Mangal & Pides"
+  // but Perplexity says just "Kebab Palace" — without an alias, the match
+  // logic returns a false "not mentioned". Edited values take effect on the
+  // next scan.
+  const [aliasDraft,  setAliasDraft]  = useState('');
+  const [addingAlias, setAddingAlias] = useState(false);
+  const [aliasSaving, setAliasSaving] = useState(false);
+
+  const persistAliases = async (next) => {
+    setAliasSaving(true);
+    setError(null);
+    // Optimistic update — snap the UI immediately, revert on failure.
+    const prev = business?.aliases || [];
+    setBusiness(b => ({ ...b, aliases: next }));
+    try {
+      const res = await updateBusinessAliases(business.id, next);
+      setBusiness(b => ({ ...b, aliases: res.data?.aliases ?? next }));
+    } catch {
+      setBusiness(b => ({ ...b, aliases: prev }));
+      setError('Could not update aliases. Please try again.');
+    } finally {
+      setAliasSaving(false);
+    }
+  };
+
+  const handleAddAlias = () => {
+    const v = aliasDraft.trim();
+    if (!v) { setAddingAlias(false); return; }
+    const existing = business?.aliases || [];
+    // Reject dupes (case-insensitive) so the user doesn't add "Kebab Palace"
+    // twice with different capitalisation.
+    if (existing.some(a => a.toLowerCase() === v.toLowerCase())) {
+      setAliasDraft('');
+      setAddingAlias(false);
+      return;
+    }
+    setAliasDraft('');
+    setAddingAlias(false);
+    persistAliases([...existing, v]);
+  };
+
+  const handleRemoveAlias = (alias) => {
+    const next = (business?.aliases || []).filter(a => a !== alias);
+    persistAliases(next);
   };
 
   const handleSaveArea = async () => {
@@ -280,6 +328,91 @@ export default function Business() {
                   edit
                 </button>
               </p>
+            )}
+            {business && (
+              <div
+                style={{
+                  marginTop: 6,
+                  display: 'flex',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: 6,
+                  fontSize: '0.78rem',
+                  color: 'var(--muted)',
+                }}
+                title="Names AI engines might use for this business that differ from its Google listing. Used to catch mentions like 'Kebab Palace' when Google lists it as 'Kebab Palace Mangal & Pides'."
+              >
+                <span>Also known as:</span>
+                {(business.aliases || []).map(alias => (
+                  <span
+                    key={alias}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      padding: '2px 4px 2px 8px',
+                      background: 'var(--bg-card)',
+                      border: '1px solid var(--border)',
+                      borderRadius: 6,
+                      color: 'var(--text)',
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    {alias}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveAlias(alias)}
+                      disabled={aliasSaving}
+                      aria-label={`Remove alias ${alias}`}
+                      style={{
+                        background: 'transparent', border: 'none',
+                        color: 'var(--muted)', cursor: 'pointer',
+                        padding: '0 4px', fontSize: '0.9rem', lineHeight: 1,
+                      }}
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+                {addingAlias ? (
+                  <input
+                    autoFocus
+                    value={aliasDraft}
+                    onChange={e => setAliasDraft(e.target.value)}
+                    onBlur={handleAddAlias}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') handleAddAlias();
+                      if (e.key === 'Escape') { setAliasDraft(''); setAddingAlias(false); }
+                    }}
+                    placeholder="e.g. Kebab Palace"
+                    maxLength={120}
+                    style={{
+                      padding: '3px 8px', fontSize: '0.78rem',
+                      background: 'var(--bg)', border: '1px solid var(--accent)',
+                      borderRadius: 6, color: 'var(--text)', outline: 'none',
+                      minWidth: 140, fontFamily: 'inherit',
+                    }}
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setAddingAlias(true)}
+                    disabled={aliasSaving}
+                    style={{
+                      background: 'transparent', border: '1px dashed var(--border)',
+                      color: 'var(--accent)', cursor: 'pointer',
+                      padding: '2px 8px', borderRadius: 6, fontSize: '0.78rem',
+                    }}
+                  >
+                    + Add alias
+                  </button>
+                )}
+                {(!business.aliases || business.aliases.length === 0) && !addingAlias && (
+                  <span style={{ opacity: 0.6, fontStyle: 'italic' }}>
+                    none — add one if AI engines call this place by a shorter name
+                  </span>
+                )}
+              </div>
             )}
           </div>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>

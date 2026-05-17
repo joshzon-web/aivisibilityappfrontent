@@ -107,6 +107,10 @@ export const resolveBusinessUrl = (url) =>
 export const updateBusinessSearchLabel = (id, search_label) =>
   api.patch(`/businesses/${id}/search_label`, { search_label });
 
+// Replace the "also known as" alias list. Affects matching on the next scan.
+export const updateBusinessAliases = (id, aliases) =>
+  api.patch(`/businesses/${id}/aliases`, { aliases });
+
 export const getBusinessScans = (businessId, search_term = null) =>
   api.get(`/businesses/${businessId}/scans`, {
     params: search_term ? { search_term } : {},
@@ -146,6 +150,13 @@ export const changePassword         = (current_password, new_password) =>
   api.patch('/me/password', { current_password, new_password });
 export const getNotificationPrefs   = () => api.get('/me/notifications');
 export const updateNotificationPrefs = (fields) => api.patch('/me/notifications', fields);
+
+// GDPR — data export + account deletion
+// exportMyData returns a Blob so the caller can trigger a file download.
+export const exportMyData    = () =>
+  api.get('/me/export', { responseType: 'blob' });
+export const deleteMyAccount = (password, confirm) =>
+  api.delete('/me', { data: { password, confirm } });
 
 // Billing
 export const getBillingStatus    = ()     => api.get('/billing/status');

@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import BrandLogo from '../components/BrandLogo';
 import Sidebar from '../components/Sidebar';
 import MobileNav from '../components/MobileNav';
-import api, { createCheckout, createPortalSession, updateProfile, changePassword, getNotificationPrefs, updateNotificationPrefs } from '../api/client';
+import api, { createCheckout, createPortalSession, updateProfile, changePassword, getNotificationPrefs, updateNotificationPrefs, exportMyData, deleteMyAccount } from '../api/client';
 import { useBillingStatus } from '../components/TrialBanner';
 
 // ── Plan definitions (mirrors core/billing.py) ────────────────────────────────
@@ -248,7 +248,229 @@ function AccountTab() {
 
       {/* ── Notifications ── */}
       <NotificationsSection />
+
+      {/* ── Your data (GDPR) ── */}
+      <DataRightsSection />
     </div>
+  );
+}
+
+
+// ── Your data (GDPR) ─────────────────────────────────────────────────────────
+//
+// Two actions live here:
+//   1. Export my data → JSON dump of everything we hold for this account.
+//                       Satisfies the right of access and portability.
+//   2. Delete account → permanently deletes account, businesses, clients,
+//                       scans, logos. Cancels Stripe subscription first.
+//                       Requires password + typed "DELETE" confirmation to
+//                       prevent accidental / hijacked-session deletion.
+function DataRightsSection() {
+  const { user, logoutUser } = useAuth();
+  const navigate = useNavigate();
+
+  // Export state
+  const [exporting,   setExporting]   = useState(false);
+  const [exportError, setExportError] = useState('');
+
+  // Delete state
+  const [showDelete,  setShowDelete]  = useState(false);
+  const [delPwd,      setDelPwd]      = useState('');
+  const [delConfirm,  setDelConfirm]  = useState('');
+  const [deleting,    setDeleting]    = useState(false);
+  const [delError,    setDelError]    = useState('');
+
+  const handleExport = async () => {
+    setExportError('');
+    setExporting(true);
+    try {
+      const res  = await exportMyData();
+      const url  = URL.createObjectURL(res.data);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = `lokscope-export-${user?.id || 'data'}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setExportError(err.response?.data?.detail || 'Could not export your data. Please try again.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleDelete = async (e) => {
+    e.preventDefault();
+    setDelError('');
+    setDeleting(true);
+    try {
+      await deleteMyAccount(delPwd, delConfirm);
+      // Account is gone — drop the token and bounce to /auth.
+      logoutUser();
+      navigate('/auth?deleted=1', { replace: true });
+    } catch (err) {
+      setDelError(err.response?.data?.detail || 'Could not delete your account. Please try again.');
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <section style={{ marginTop: 64, paddingTop: 32, borderTop: '1px solid var(--border)' }}>
+      <h2 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: 6, color: 'var(--text)' }}>
+        Your data
+      </h2>
+      <p style={{ fontSize: '0.8rem', color: 'var(--muted)', marginBottom: 20, lineHeight: 1.5 }}>
+        Under UK GDPR you have the right to access, export and delete your data.
+        These tools are self-serve — no support ticket needed.
+      </p>
+
+      {/* Export */}
+      <div style={{
+        border: '1px solid var(--border)', borderRadius: 12, padding: '16px 20px',
+        background: 'var(--bg-card)', marginBottom: 16, maxWidth: 620,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+          <div>
+            <div style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text)', marginBottom: 2 }}>
+              Export my data
+            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--muted)', lineHeight: 1.5 }}>
+              Download a JSON file with your account, businesses, clients, scans and usage events.
+            </div>
+          </div>
+          <button
+            onClick={handleExport}
+            disabled={exporting}
+            style={{
+              padding: '8px 18px', borderRadius: 8, fontSize: '0.83rem',
+              background: 'transparent', border: '1px solid var(--border)',
+              color: 'var(--text)', cursor: exporting ? 'default' : 'pointer',
+              fontWeight: 500, whiteSpace: 'nowrap', opacity: exporting ? 0.6 : 1,
+            }}
+          >
+            {exporting ? 'Preparing…' : 'Download JSON'}
+          </button>
+        </div>
+        {exportError && (
+          <p style={{ fontSize: '0.78rem', color: 'var(--red)', marginTop: 10, marginBottom: 0 }}>
+            {exportError}
+          </p>
+        )}
+      </div>
+
+      {/* Delete */}
+      <div style={{
+        border: '1px solid rgba(248,113,113,0.25)', borderRadius: 12, padding: '16px 20px',
+        background: 'rgba(248,113,113,0.05)', maxWidth: 620,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+          <div>
+            <div style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text)', marginBottom: 2 }}>
+              Delete account
+            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--muted)', lineHeight: 1.5 }}>
+              Permanently deletes your account, all businesses, clients, scans and uploaded logos.
+              Your Stripe subscription is cancelled automatically. This cannot be undone.
+            </div>
+          </div>
+          {!showDelete && (
+            <button
+              onClick={() => { setShowDelete(true); setDelError(''); }}
+              style={{
+                padding: '8px 18px', borderRadius: 8, fontSize: '0.83rem',
+                background: 'transparent', border: '1px solid rgba(248,113,113,0.5)',
+                color: 'var(--red)', cursor: 'pointer', fontWeight: 500, whiteSpace: 'nowrap',
+              }}
+            >
+              Delete account…
+            </button>
+          )}
+        </div>
+
+        {showDelete && (
+          <form onSubmit={handleDelete} style={{ marginTop: 20, paddingTop: 20, borderTop: '1px solid rgba(248,113,113,0.15)' }}>
+            <div style={{ marginBottom: 14 }}>
+              <label style={{
+                display: 'block', fontSize: '0.75rem', fontWeight: 600,
+                color: 'var(--muted)', marginBottom: 6, letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+              }}>
+                Confirm password
+              </label>
+              <input
+                type="password"
+                value={delPwd}
+                onChange={(e) => setDelPwd(e.target.value)}
+                autoComplete="current-password"
+                style={{
+                  width: '100%', padding: '10px 14px', fontSize: '0.88rem',
+                  background: 'var(--bg)', border: '1px solid var(--border)',
+                  borderRadius: '8px', color: 'var(--text)', outline: 'none',
+                  boxSizing: 'border-box', fontFamily: 'inherit',
+                }}
+              />
+            </div>
+            <div style={{ marginBottom: 14 }}>
+              <label style={{
+                display: 'block', fontSize: '0.75rem', fontWeight: 600,
+                color: 'var(--muted)', marginBottom: 6, letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+              }}>
+                Type DELETE to confirm
+              </label>
+              <input
+                type="text"
+                value={delConfirm}
+                onChange={(e) => setDelConfirm(e.target.value)}
+                placeholder="DELETE"
+                style={{
+                  width: '100%', padding: '10px 14px', fontSize: '0.88rem',
+                  background: 'var(--bg)', border: '1px solid var(--border)',
+                  borderRadius: '8px', color: 'var(--text)', outline: 'none',
+                  boxSizing: 'border-box', fontFamily: 'inherit',
+                }}
+              />
+            </div>
+            {delError && (
+              <div style={{
+                background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.3)',
+                color: 'var(--red)', borderRadius: 8, padding: '10px 14px',
+                fontSize: '0.82rem', marginBottom: 14,
+              }}>
+                {delError}
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                type="submit"
+                disabled={deleting || !delPwd || delConfirm !== 'DELETE'}
+                style={{
+                  padding: '10px 20px', borderRadius: 8, fontSize: '0.85rem',
+                  background: 'var(--red)', border: 'none', color: '#fff',
+                  fontWeight: 700, cursor: (deleting || !delPwd || delConfirm !== 'DELETE') ? 'default' : 'pointer',
+                  opacity: (deleting || !delPwd || delConfirm !== 'DELETE') ? 0.5 : 1,
+                }}
+              >
+                {deleting ? 'Deleting…' : 'Delete my account permanently'}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setShowDelete(false); setDelPwd(''); setDelConfirm(''); setDelError(''); }}
+                disabled={deleting}
+                style={{
+                  padding: '10px 20px', borderRadius: 8, fontSize: '0.85rem',
+                  background: 'transparent', border: '1px solid var(--border)',
+                  color: 'var(--muted)', cursor: 'pointer', fontWeight: 500,
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    </section>
   );
 }
 

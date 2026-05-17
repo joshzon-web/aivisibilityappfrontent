@@ -1,9 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 
-const APP_NAME    = '[App Name]';
-const COMPANY     = '[Company Name]';
-const CONTACT     = '[Contact Email]';
-const EFFECTIVE   = '[Effective Date]';
+const APP_NAME    = 'Lokscope';
+const COMPANY     = 'Lokscope Ltd';
+const CONTACT     = 'hello@lokscope.com';
+const EFFECTIVE   = '17 May 2026';
 
 export default function Privacy() {
   const navigate = useNavigate();
@@ -35,7 +35,7 @@ export default function Privacy() {
 
         <h2 style={h2}>1. Who We Are</h2>
         <p style={p}>
-          {COMPANY} operates {APP_NAME}, an AI visibility scanning and reporting platform for marketing agencies. This policy explains how we collect, use, and protect your personal data. For questions, contact us at {CONTACT}.
+          {COMPANY} ("we", "us") operates {APP_NAME}, an AI visibility scanning and reporting platform for marketing agencies. We are the data controller for personal data processed through the Service. For any privacy question or to exercise your rights, contact us at <a href={`mailto:${CONTACT}`} style={{ color: 'var(--accent)' }}>{CONTACT}</a>.
         </p>
 
         <h2 style={h2}>2. Data We Collect</h2>
@@ -81,12 +81,21 @@ export default function Privacy() {
 
         <h2 style={h2}>6. Data Retention</h2>
         <p style={p}>
-          We retain your account data for as long as your account is active. Scan results are retained indefinitely to provide historical trend data — this is core to the product's value. If you delete your account, your personal data and scan results will be permanently deleted within 30 days. Billing records may be retained longer to comply with financial regulations.
+          We retain your account data and scan results for as long as your account is active — historical scans are core to the product's trend value. You can permanently delete your account and all associated data at any time from <strong>Settings → Account → Delete account</strong>. Deletion is immediate: your account, businesses, clients, scans and uploaded logos are removed from our database within seconds, and your Stripe subscription is cancelled automatically. Billing records held by Stripe (invoices, payment history) may be retained by Stripe to comply with financial regulations.
         </p>
 
         <h2 style={h2}>7. Your Rights (UK/EU Users)</h2>
         <p style={p}>
-          Under UK GDPR, you have the right to: access the data we hold about you; correct inaccurate data; request deletion of your data; object to processing; and data portability. To exercise any of these rights, contact us at {CONTACT}. We will respond within 30 days.
+          Under UK GDPR, you have the right to: access the data we hold about you; correct inaccurate data; request deletion of your data; object to processing; and data portability.
+        </p>
+        <ul style={{ paddingLeft: 20, marginBottom: 12 }}>
+          <li style={li}><strong style={{ color: 'var(--text)' }}>Access &amp; portability</strong> — download a complete machine-readable (JSON) export of your account, businesses, clients and scans from <strong>Settings → Account → Export my data</strong>.</li>
+          <li style={li}><strong style={{ color: 'var(--text)' }}>Erasure</strong> — delete your account and all associated personal data from <strong>Settings → Account → Delete account</strong>.</li>
+          <li style={li}><strong style={{ color: 'var(--text)' }}>Rectification</strong> — update your name and email from <strong>Settings → Account</strong>.</li>
+          <li style={li}><strong style={{ color: 'var(--text)' }}>Objection &amp; other rights</strong> — contact us at <a href={`mailto:${CONTACT}`} style={{ color: 'var(--accent)' }}>{CONTACT}</a>. We will respond within 30 days.</li>
+        </ul>
+        <p style={p}>
+          If you believe we have not handled your data properly, you have the right to lodge a complaint with the UK Information Commissioner's Office (ICO) at <a href="https://ico.org.uk/" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)' }}>ico.org.uk</a>.
         </p>
 
         <h2 style={h2}>8. Security</h2>
@@ -96,7 +105,7 @@ export default function Privacy() {
 
         <h2 style={h2}>9. Children</h2>
         <p style={p}>
-          {APP_NAME} is not directed at children under 16. We do not knowingly collect data from children. If you believe a child has provided us data, contact us at {CONTACT} and we will delete it.
+          {APP_NAME} is not directed at children under 16. We do not knowingly collect data from children. If you believe a child has provided us data, contact us at <a href={`mailto:${CONTACT}`} style={{ color: 'var(--accent)' }}>{CONTACT}</a> and we will delete it.
         </p>
 
         <h2 style={h2}>10. Changes to This Policy</h2>
@@ -106,7 +115,7 @@ export default function Privacy() {
 
         <h2 style={h2}>11. Contact</h2>
         <p style={p}>
-          For privacy questions or to exercise your rights, contact us at {CONTACT}.
+          For privacy questions or to exercise your rights, contact us at <a href={`mailto:${CONTACT}`} style={{ color: 'var(--accent)' }}>{CONTACT}</a>.
         </p>
 
       </div>
