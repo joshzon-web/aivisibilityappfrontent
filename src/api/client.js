@@ -73,7 +73,7 @@ export const updateBusinessSchedule = (id, scheduled_interval) =>
 // scan/probe helpers, where the pre-scan label probe lives.
 
 // Scans
-// opts: { force_refresh?: bool, search_label_override?: string }
+// opts: { force_refresh?: bool, search_label_override?: string, aliases?: string[] }
 export const runScan = (place_id, search_term, opts = {}) => {
   const body = {
     place_id,
@@ -82,6 +82,12 @@ export const runScan = (place_id, search_term, opts = {}) => {
   };
   if (opts.search_label_override && opts.search_label_override.trim()) {
     body.search_label_override = opts.search_label_override.trim();
+  }
+  // Aliases let the caller pre-seed "also known as" names that AI engines
+  // might use for the business but that aren't in the Google listing name.
+  // Backend merges them additively into the business row.
+  if (Array.isArray(opts.aliases) && opts.aliases.length > 0) {
+    body.aliases = opts.aliases.map(a => (a || '').trim()).filter(Boolean);
   }
   return api.post('/scan', body);
 };

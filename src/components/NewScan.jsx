@@ -28,6 +28,26 @@ export default function NewScan({ onComplete, onCancel, clientId = null }) {
   const [probing, setProbing]         = useState(false);
   const [areaLabel, setAreaLabel]     = useState('');
 
+  // "Also known as" — names AI engines might use for this business that
+  // Google's listing doesn't include. Pre-set here so the very first scan
+  // already matches them; otherwise the user would have to wait for the
+  // Business page (which doesn't exist until after the first scan) to add
+  // them and re-scan, wasting a scan.
+  const [aliases, setAliases]         = useState([]);
+  const [aliasDraft, setAliasDraft]   = useState('');
+
+  const addAlias = () => {
+    const v = aliasDraft.trim();
+    if (!v) return;
+    if (aliases.some(a => a.toLowerCase() === v.toLowerCase())) {
+      setAliasDraft('');
+      return;
+    }
+    setAliases([...aliases, v]);
+    setAliasDraft('');
+  };
+  const removeAlias = (alias) => setAliases(aliases.filter(a => a !== alias));
+
   const [urlMode, setUrlMode]     = useState(false);
   const [mapsUrl, setMapsUrl]     = useState('');
   const [resolving, setResolving] = useState(false);
@@ -112,6 +132,7 @@ export default function NewScan({ onComplete, onCancel, clientId = null }) {
       const override = trimmed && trimmed !== autoPick ? trimmed : undefined;
       const res = await runScan(selected.place_id, searchTerm, {
         search_label_override: override,
+        aliases,
       });
       clearInterval(interval);
       onComplete(res.data.scan_id, res.data.business_id);
@@ -317,6 +338,75 @@ export default function NewScan({ onComplete, onCancel, clientId = null }) {
                     </>
                   )}
                 </div>
+                {/* "Also known as" — pre-seed aliases for the first scan so
+                    matching catches shortened/colloquial names AI engines use
+                    that Google's listing doesn't include.
+                    e.g. Google has "Bella Italia - Bolton, The Linkway,
+                    Horwich" but Perplexity says just "Bella Italia". */}
+                <div className={styles.field}>
+                  <label>Also known as <span style={{ opacity: 0.5, fontWeight: 400 }}>(optional)</span></label>
+                  <div
+                    style={{
+                      display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6,
+                      padding: '8px 10px', minHeight: 42,
+                      background: 'var(--bg)', border: '1px solid var(--border)',
+                      borderRadius: 8,
+                    }}
+                  >
+                    {aliases.map(alias => (
+                      <span
+                        key={alias}
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 4,
+                          padding: '3px 4px 3px 9px', fontSize: '0.85rem',
+                          background: 'var(--bg-card)', border: '1px solid var(--border)',
+                          borderRadius: 6, color: 'var(--text)', lineHeight: 1.3,
+                        }}
+                      >
+                        {alias}
+                        <button
+                          type="button"
+                          onClick={() => removeAlias(alias)}
+                          aria-label={`Remove alias ${alias}`}
+                          style={{
+                            background: 'transparent', border: 'none',
+                            color: 'var(--muted)', cursor: 'pointer',
+                            padding: '0 4px', fontSize: '0.95rem', lineHeight: 1,
+                          }}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                    <input
+                      value={aliasDraft}
+                      onChange={(e) => setAliasDraft(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ',') {
+                          e.preventDefault();
+                          addAlias();
+                        } else if (e.key === 'Backspace' && !aliasDraft && aliases.length > 0) {
+                          // Backspace on empty input removes the last chip
+                          removeAlias(aliases[aliases.length - 1]);
+                        }
+                      }}
+                      onBlur={addAlias}
+                      placeholder={aliases.length === 0 ? 'e.g. Bella Italia' : ''}
+                      maxLength={120}
+                      style={{
+                        flex: 1, minWidth: 120, padding: '4px 0',
+                        background: 'transparent', border: 'none', outline: 'none',
+                        color: 'var(--text)', fontFamily: 'inherit', fontSize: '0.88rem',
+                      }}
+                    />
+                  </div>
+                  <span className={styles.hint}>
+                    Type a shorter or colloquial name and press Enter. Useful
+                    when Google's listing name is long but AI engines refer
+                    to the place by something shorter.
+                  </span>
+                </div>
+
                 {/* Quota warning — show when ≤3 scans remaining, block at 0 */}
                 {(() => {
                   const limit = billingStatus?.scans_limit;

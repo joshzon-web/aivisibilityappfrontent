@@ -21,6 +21,10 @@ const FAQS = [
     a: "Perplexity searches the live web in real time and is highly sensitive to your business's current online footprint — reviews, citations, directory listings, and fresh web content. A 0% Perplexity score usually means the business has limited online presence outside its own website. Improving the number of third-party sites that mention the business (directories, review platforms, local press) typically raises this score within a few weeks.",
   },
   {
+    q: 'The AI mentioned my business but the scan says "Not mentioned" — why?',
+    a: 'This usually happens when Google\'s official listing name is longer than what AI engines actually say. Google might list a place as "Kebab Palace Mangal & Pides" but Perplexity refers to it as just "Kebab Palace" — our matcher is looking for the full name and misses the shorter version. Fix it by adding the shorter name as an "Also known as" alias: on the business page, look for the "Also known as:" row under the business title and click "+ Add alias" to add it. You can also pre-set aliases when creating a new scan — the "Also known as (optional)" field on the Configure scan step lets you add them before the very first scan runs. Aliases take effect on the NEXT scan; historical scans don\'t re-classify retroactively (so old reports stay reproducible). Common cases to alias: businesses whose Google listing includes a location suffix ("- Bolton", "(Brighton)"), an ampersand-joined second name ("& Pides", "& Co"), or a long descriptor the locals never use.',
+  },
+  {
     q: 'How do I add my logo and brand colours?',
     a: 'Go to White-label in the sidebar. You can upload your agency logo, set a primary colour, add your support email, and customise the CTA text that appears on sales PDFs. Changes apply to all new PDFs and share links immediately — existing shared links update on next view.',
   },
